@@ -6,3 +6,70 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  tenant Tenant?
+  role Role?
+  properties Property[]
+}
+
+enum UserRole {
+  LANDLORD
+  TENANT
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+  role UserRole @default(TENANT)
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Property {
+  id Int @id @default(autoincrement())
+  name String
+  address String
+  ownerId Int
+  owner User @relation(fields: [ownerId], references: [id])
+  leases Lease[]
+}
+
+model Tenant {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  phoneNumber String
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+  leases Lease[]
+}
+
+model Lease {
+  id Int @id @default(autoincrement())
+  propertyId Int
+  rentalPrice Float
+  tenantCount Int @default(1)
+  property Property @relation(fields: [propertyId], references: [id])
+  tenantId Int
+  tenants Tenant[]
+  startDate DateTime
+  endDate DateTime
+  payments Payment[]
+}
+
+enum PaymentStatus {
+  PENDING
+  REVIEW
+  COMPLETED
+  FAILED
+}
+
+model Payment {
+  id Int @id @default(autoincrement())
+  leaseId Int
+  lease Lease @relation(fields: [leaseId], references: [id])
+  status PaymentStatus @default(PENDING)
+}
