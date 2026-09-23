@@ -10,6 +10,7 @@ import { Field, Input, Textarea } from "@/components/ui/form-controls";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { useParams } from "next/navigation";
 import type { Apartment } from "@/lib/types";
+import { landlordRoutes } from "@/lib/routes";
 
 const emptyData: AppData = {
   apartments: [],
@@ -104,7 +105,7 @@ function ApartmentForm({ apartment }: { apartment?: Apartment }) {
         <Link
           href={
             apartment
-              ? `/landlord/apartments/${apartment.id}`
+              ? landlordRoutes.apartment(apartment.id)
               : "/landlord/apartments"
           }
         >
@@ -121,14 +122,14 @@ function ApartmentForm({ apartment }: { apartment?: Apartment }) {
 }
 
 export default function Page() {
-  const { id } = useParams<{ id: string }>();
+  const { apartment: id } = useParams<{ apartment: string }>();
   const data = emptyData;
   const record = data.apartments.find((item) => item.id === id);
   if (!record)
-    return <NotFoundState noun="Apartment" href="/landlord/apartments" />;
+    return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
   return (
     <div className="space-y-6">
-      <BackLink href={`/landlord/apartments/${record.id}`} />
+      <BackLink href={landlordRoutes.apartment(record.id)} />
       <PageHeader
         title="Edit apartment"
         description="Keep property information clear and easy to reference."

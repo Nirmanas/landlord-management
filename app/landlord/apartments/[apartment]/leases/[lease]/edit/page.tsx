@@ -11,7 +11,8 @@ import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { formatCurrency, splitRent } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 import { useParams } from "next/navigation";
-import type { Lease } from "@/lib/types";
+import type { Apartment, Lease } from "@/lib/types";
+import { landlordRoutes } from "@/lib/routes";
 
 const emptyData: AppData = {
   apartments: [],
@@ -21,19 +22,9 @@ const emptyData: AppData = {
   tenantPayments: [],
 };
 
-function LeaseForm({ lease }: { lease?: Lease }) {
+function LeaseForm({ lease, apartment }: { lease: Lease; apartment: Apartment }) {
   const data = emptyData;
-  const [form, setForm] = useState<Lease>(
-    lease ?? {
-      id: "",
-      apartmentId: data.apartments[0]?.id ?? "",
-      startDate: "",
-      endDate: "",
-      status: "upcoming",
-      totalRentCents: 0,
-      tenantIds: [],
-    },
-  );
+  const [form, setForm] = useState<Lease>(lease);
   const set = <K extends keyof Lease>(key: K, value: Lease[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
   const shares = splitRent(form.totalRentCents, form.tenantIds);
@@ -53,31 +44,9 @@ function LeaseForm({ lease }: { lease?: Lease }) {
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <Field label="Apartment">
-            <Select
-              required
-              value={form.apartmentId}
-              onChange={(e) => set("apartmentId", e.target.value)}
-            >
-              <option value="" disabled>
-                Choose an apartment
-              </option>
-              {data.apartments.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </Select>
-            {data.apartments.length === 0 && (
-              <p className="mt-2 text-xs text-zinc-500">
-                <Link
-                  href="/landlord/apartments/new"
-                  className="font-medium text-emerald-700 hover:underline"
-                >
-                  Create an apartment
-                </Link>{" "}
-                first.
-              </p>
-            )}
+            <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
+              {apartment.name}
+            </p>
           </Field>
           <Field label="Status">
             <Select
@@ -171,15 +140,13 @@ function LeaseForm({ lease }: { lease?: Lease }) {
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Link
-          href={lease ? `/landlord/leases/${lease.id}` : "/landlord/leases"}
-        >
+        <Link href={landlordRoutes.lease(apartment.id, lease.id)}>
           <Button type="button" variant="outline">
             Cancel
           </Button>
         </Link>
         <Button type="button" disabled>
-          {lease ? "Save changes" : "Create lease"}
+          Save changes
         </Button>
       </div>
     </form>
@@ -187,18 +154,27 @@ function LeaseForm({ lease }: { lease?: Lease }) {
 }
 
 export default function Page() {
-  const { id } = useParams<{ id: string }>();
+  const { apartment: apartmentId, lease: leaseId } = useParams<{
+    apartment: string;
+    lease: string;
+  }>();
   const data = emptyData;
-  const record = data.leases.find((item) => item.id === id);
-  if (!record) return <NotFoundState noun="Lease" href="/landlord/leases" />;
+  const apartment = data.apartments.find((item) => item.id === apartmentId);
+  if (!apartment)
+    return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
+  const record = data.leases.find(
+    (item) => item.id === leaseId && item.apartmentId === apartmentId,
+  );
+  if (!record)
+    return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
   return (
     <div className="space-y-6">
-      <BackLink href={`/landlord/leases/${record.id}`} />
+      <BackLink href={landlordRoutes.lease(apartmentId, record.id)} />
       <PageHeader
         title="Edit lease"
-        description="Set the rent, term, apartment, and tenant assignments."
+        description={`Set the rent, term, and tenant assignments for ${apartment.name}.`}
       />
-      <LeaseForm lease={record} />
+      <LeaseForm lease={record} apartment={apartment} />
     </div>
   );
 }

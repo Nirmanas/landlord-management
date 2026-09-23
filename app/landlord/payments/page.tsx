@@ -2,6 +2,7 @@
 
 import type { AppData } from "@/lib/types";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/form-controls";
@@ -13,6 +14,7 @@ import {
 } from "@/components/shared";
 import { formatCurrency, formatDate, isOverdue } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
+import { landlordRoutes } from "@/lib/routes";
 
 const emptyData: AppData = {
   apartments: [],
@@ -182,7 +184,20 @@ export default function Page() {
                       <td className={tdClass}>
                         <PaymentBadge payment={payment} period={period} />
                       </td>
-                      <td className={tdClass}></td>
+                      <td className={tdClass}>
+                        {lease && period && (
+                          <Link
+                            href={landlordRoutes.period(
+                              lease.apartmentId,
+                              lease.id,
+                              period.id,
+                            )}
+                            className="font-medium text-emerald-700 hover:underline"
+                          >
+                            View period
+                          </Link>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}

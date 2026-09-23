@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader, StatCard } from "@/components/shared";
 import { formatCurrency, landlordMetrics } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
+import { landlordRoutes } from "@/lib/routes";
 
 const emptyData: AppData = {
   apartments: [],
@@ -109,7 +110,7 @@ export default function Page() {
               );
               return (
                 <Link
-                  href={`/landlord/apartments/${apartment.id}`}
+                  href={landlordRoutes.apartment(apartment.id)}
                   key={apartment.id}
                   className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 hover:bg-zinc-50"
                 >

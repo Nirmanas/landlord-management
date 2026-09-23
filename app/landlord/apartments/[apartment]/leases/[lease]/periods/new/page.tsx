@@ -11,6 +11,7 @@ import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { formatCurrency } from "@/lib/domain";
 import { useParams } from "next/navigation";
 import type { Lease } from "@/lib/types";
+import { landlordRoutes } from "@/lib/routes";
 
 const emptyData: AppData = {
   apartments: [],
@@ -62,7 +63,7 @@ function PaymentPeriodForm({ lease }: { lease: Lease }) {
       </div>
 
       <div className="flex justify-end gap-3">
-        <Link href={`/landlord/leases/${lease.id}`}>
+        <Link href={landlordRoutes.lease(lease.apartmentId, lease.id)}>
           <Button type="button" variant="outline">
             Cancel
           </Button>
@@ -76,13 +77,22 @@ function PaymentPeriodForm({ lease }: { lease: Lease }) {
 }
 
 export default function Page() {
-  const { id } = useParams<{ id: string }>();
+  const { apartment: apartmentId, lease: leaseId } = useParams<{
+    apartment: string;
+    lease: string;
+  }>();
   const data = emptyData;
-  const lease = data.leases.find((item) => item.id === id);
-  if (!lease) return <NotFoundState noun="Lease" href="/landlord/leases" />;
+  const apartment = data.apartments.find((item) => item.id === apartmentId);
+  if (!apartment)
+    return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
+  const lease = data.leases.find(
+    (item) => item.id === leaseId && item.apartmentId === apartmentId,
+  );
+  if (!lease)
+    return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
   return (
     <div className="space-y-6">
-      <BackLink href={`/landlord/leases/${id}`} />
+      <BackLink href={landlordRoutes.lease(apartmentId, leaseId)} />
       <PageHeader
         title="Create payment period"
         description="Generate a fixed payment record for every tenant on this lease."

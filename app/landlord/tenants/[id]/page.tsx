@@ -16,6 +16,7 @@ import {
 import { formatCurrency, splitRent } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 import { useParams } from "next/navigation";
+import { landlordRoutes } from "@/lib/routes";
 
 const emptyData: AppData = {
   apartments: [],
@@ -74,7 +75,7 @@ export default function Page() {
               ).find((s) => s.tenantId === id);
               return (
                 <Link
-                  href={`/landlord/leases/${lease.id}`}
+                  href={landlordRoutes.lease(lease.apartmentId, lease.id)}
                   key={lease.id}
                   className="flex items-center justify-between p-4 hover:bg-zinc-50"
                 >

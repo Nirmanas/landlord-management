@@ -6,8 +6,10 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DateRange, EmptyState, PageHeader } from "@/components/shared";
+import { BackLink, DateRange, EmptyState, NotFoundState, PageHeader } from "@/components/shared";
 import { formatCurrency } from "@/lib/domain";
+import { landlordRoutes } from "@/lib/routes";
+import { useParams } from "next/navigation";
 
 const emptyData: AppData = {
   apartments: [],
@@ -23,20 +25,26 @@ const thClass =
 const tdClass = "border-b border-zinc-100 px-4 py-4 text-zinc-700";
 
 export default function Page() {
+  const { apartment: apartmentId } = useParams<{ apartment: string }>();
   const data = emptyData;
+  const apartment = data.apartments.find((item) => item.id === apartmentId);
+  if (!apartment)
+    return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
+  const leases = data.leases.filter((lease) => lease.apartmentId === apartmentId);
   return (
     <div className="space-y-6">
+      <BackLink href={landlordRoutes.apartment(apartmentId)}>{apartment.name}</BackLink>
       <PageHeader
-        title="Leases"
+        title={`${apartment.name} leases`}
         description="Track agreements, rents, and tenant assignments."
-        actionHref="/landlord/leases/new"
+        actionHref={landlordRoutes.newLease(apartmentId)}
         actionLabel="New lease"
       />
-      {data.leases.length === 0 ? (
+      {leases.length === 0 ? (
         <EmptyState
           title="No leases yet"
-          description="Create an apartment and tenant, then add your first lease."
-          actionHref="/landlord/leases/new"
+          description="Create a tenant, then add this apartment’s first lease."
+          actionHref={landlordRoutes.newLease(apartmentId)}
           actionLabel="Create lease"
         />
       ) : (
@@ -45,54 +53,43 @@ export default function Page() {
             <table className={tableClass}>
               <thead>
                 <tr>
-                  <th className={thClass}>Apartment</th>
                   <th className={thClass}>Dates</th>
                   <th className={thClass}>Rent</th>
                   <th className={thClass}>Tenants</th>
                   <th className={thClass}>Status</th>
-                  <th className={thClass}></th>
+                  <th className={thClass}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {data.leases.map((lease) => {
-                  const apartment = data.apartments.find(
-                    (a) => a.id === lease.apartmentId,
-                  );
-                  return (
-                    <tr key={lease.id}>
-                      <td className={tdClass}>
-                        <p className="font-medium text-zinc-900">
-                          {apartment?.name}
-                        </p>
-                      </td>
-                      <td className={tdClass}>
-                        <DateRange
-                          start={lease.startDate}
-                          end={lease.endDate}
-                        />
-                      </td>
-                      <td className={tdClass}>
-                        {formatCurrency(lease.totalRentCents)}
-                      </td>
-                      <td className={tdClass}>{lease.tenantIds.length}</td>
-                      <td className={tdClass}>
-                        <Badge tone={lease.status}>{lease.status}</Badge>
-                      </td>
-                      <td className={`${tdClass} text-right`}>
-                        <Link href={`/landlord/leases/${lease.id}`}>
-                          <Button variant="ghost" size="sm">
-                            View
-                          </Button>
-                        </Link>
-                        <Link href={`/landlord/leases/${lease.id}/edit`}>
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {leases.map((lease) => (
+                  <tr key={lease.id}>
+                    <td className={tdClass}>
+                      <DateRange
+                        start={lease.startDate}
+                        end={lease.endDate}
+                      />
+                    </td>
+                    <td className={tdClass}>
+                      {formatCurrency(lease.totalRentCents)}
+                    </td>
+                    <td className={tdClass}>{lease.tenantIds.length}</td>
+                    <td className={tdClass}>
+                      <Badge tone={lease.status}>{lease.status}</Badge>
+                    </td>
+                    <td className={`${tdClass} text-right`}>
+                      <Link href={landlordRoutes.lease(apartmentId, lease.id)}>
+                        <Button variant="ghost" size="sm">
+                          View
+                        </Button>
+                      </Link>
+                      <Link href={landlordRoutes.leaseEdit(apartmentId, lease.id)}>
+                        <Button variant="ghost" size="sm">
+                          Edit
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </CardContent>

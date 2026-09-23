@@ -14,6 +14,7 @@ import {
   PageHeader,
 } from "@/components/shared";
 import { formatCurrency } from "@/lib/domain";
+import { landlordRoutes } from "@/lib/routes";
 import { useParams } from "next/navigation";
 
 const emptyData: AppData = {
@@ -25,11 +26,11 @@ const emptyData: AppData = {
 };
 
 export default function Page() {
-  const { id } = useParams<{ id: string }>();
+  const { apartment: id } = useParams<{ apartment: string }>();
   const data = emptyData;
   const apartment = data.apartments.find((a) => a.id === id);
   if (!apartment)
-    return <NotFoundState noun="Apartment" href="/landlord/apartments" />;
+    return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
   const leases = data.leases.filter((l) => l.apartmentId === id);
   return (
     <div className="space-y-6">
@@ -39,9 +40,17 @@ export default function Page() {
           title={apartment.name}
           description={`${apartment.address}, ${apartment.city}, ${apartment.postalCode}`}
         />
-        <Link href={`/landlord/apartments/${id}/edit`}>
-          <Button variant="outline">Edit apartment</Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href={landlordRoutes.leases(id)}>
+            <Button variant="outline">View leases</Button>
+          </Link>
+          <Link href={landlordRoutes.newLease(id)}>
+            <Button>New lease</Button>
+          </Link>
+          <Link href={landlordRoutes.apartmentEdit(id)}>
+            <Button variant="outline">Edit apartment</Button>
+          </Link>
+        </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
         <Card>
@@ -73,7 +82,7 @@ export default function Page() {
               <div className="divide-y divide-zinc-100">
                 {leases.map((lease) => (
                   <Link
-                    href={`/landlord/leases/${lease.id}`}
+                    href={landlordRoutes.lease(id, lease.id)}
                     key={lease.id}
                     className="flex items-center justify-between p-4 hover:bg-zinc-50"
                   >

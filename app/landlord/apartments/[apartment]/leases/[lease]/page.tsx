@@ -18,6 +18,7 @@ import {
 import { formatCurrency, formatDate, splitRent } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 import { useParams } from "next/navigation";
+import { landlordRoutes } from "@/lib/routes";
 
 const emptyData: AppData = {
   apartments: [],
@@ -28,30 +29,36 @@ const emptyData: AppData = {
 };
 
 export default function Page() {
-  const { id } = useParams<{ id: string }>();
+  const { apartment: apartmentId, lease: leaseId } = useParams<{
+    apartment: string;
+    lease: string;
+  }>();
   const data = emptyData;
-  const lease = data.leases.find((l) => l.id === id);
-  if (!lease) return <NotFoundState noun="Lease" href="/landlord/leases" />;
-  const apartment = data.apartments.find((a) => a.id === lease.apartmentId);
+  const apartment = data.apartments.find((item) => item.id === apartmentId);
+  if (!apartment)
+    return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
+  const lease = data.leases.find(
+    (item) => item.id === leaseId && item.apartmentId === apartmentId,
+  );
+  if (!lease)
+    return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
   const periods = data.paymentPeriods
-    .filter((p) => p.leaseId === id)
+    .filter((p) => p.leaseId === leaseId)
     .sort((a, b) => b.startDate.localeCompare(a.startDate));
   const shares = splitRent(lease.totalRentCents, lease.tenantIds);
   return (
     <div className="space-y-6">
-      <BackLink href="/landlord/leases">All leases</BackLink>
+      <BackLink href={landlordRoutes.leases(apartmentId)}>All leases</BackLink>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
-          title={apartment?.name ?? "Lease"}
-          description={
-            (<DateRange start={lease.startDate} end={lease.endDate} />) as never
-          }
+          title={apartment.name}
+          description={<DateRange start={lease.startDate} end={lease.endDate} />}
         />
         <div className="flex gap-2">
-          <Link href={`/landlord/leases/${id}/edit`}>
+          <Link href={landlordRoutes.leaseEdit(apartmentId, leaseId)}>
             <Button variant="outline">Edit lease</Button>
           </Link>
-          <Link href={`/landlord/leases/${id}/periods/new`}>
+          <Link href={landlordRoutes.newPeriod(apartmentId, leaseId)}>
             <Button>Create payment period</Button>
           </Link>
         </div>
@@ -114,7 +121,7 @@ export default function Page() {
               return (
                 <Card key={period.id}>
                   <CardHeader className="border-b">
-                    <div className="flex flex-col justify-between gap-2 sm:flex-row">
+                    <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                       <div>
                         <CardTitle>
                           <DateRange
@@ -126,11 +133,16 @@ export default function Page() {
                           Due {formatDate(period.dueDate)}
                         </p>
                       </div>
-                      <p className="font-semibold text-zinc-900">
-                        {formatCurrency(
-                          payments.reduce((sum, p) => sum + p.amountCents, 0),
-                        )}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <p className="font-semibold text-zinc-900">
+                          {formatCurrency(
+                            payments.reduce((sum, p) => sum + p.amountCents, 0),
+                          )}
+                        </p>
+                        <Link href={landlordRoutes.period(apartmentId, leaseId, period.id)}>
+                          <Button variant="outline" size="sm">View period</Button>
+                        </Link>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="divide-y divide-zinc-100 p-0">
@@ -166,7 +178,7 @@ export default function Page() {
           <EmptyState
             title="No payment periods"
             description="Create a payment period to generate tenant payment records."
-            actionHref={`/landlord/leases/${id}/periods/new`}
+            actionHref={landlordRoutes.newPeriod(apartmentId, leaseId)}
             actionLabel="Create payment period"
           />
         )}
