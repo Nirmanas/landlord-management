@@ -8,11 +8,14 @@ import { Field, Input } from "@/components/ui/form-controls";
 import { BackLink, PageHeader } from "@/components/shared";
 import type { Tenant } from "@/lib/types";
 
+type TenantFields = { name: string; phoneNumber: string };
+
 function TenantForm({ tenant }: { tenant?: Tenant }) {
-  const [form, setForm] = useState<Tenant>(
-    tenant ?? { id: "", firstName: "", lastName: "", email: "", phone: "" },
-  );
-  const set = (key: keyof Tenant, value: string) =>
+  const [form, setForm] = useState<TenantFields>({
+    name: tenant ? `${tenant.firstName} ${tenant.lastName}`.trim() : "",
+    phoneNumber: tenant?.phone ?? "",
+  });
+  const set = (key: keyof TenantFields, value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
   return (
     <form className="space-y-5">
@@ -21,34 +24,19 @@ function TenantForm({ tenant }: { tenant?: Tenant }) {
           <CardTitle>Tenant information</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field label="First name">
+          <Field label="Name">
             <Input
               required
-              value={form.firstName}
-              onChange={(e) => set("firstName", e.target.value)}
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
             />
           </Field>
-          <Field label="Last name">
-            <Input
-              required
-              value={form.lastName}
-              onChange={(e) => set("lastName", e.target.value)}
-            />
-          </Field>
-          <Field label="Email">
-            <Input
-              required
-              type="email"
-              value={form.email}
-              onChange={(e) => set("email", e.target.value)}
-            />
-          </Field>
-          <Field label="Phone">
+          <Field label="Phone number">
             <Input
               required
               type="tel"
-              value={form.phone}
-              onChange={(e) => set("phone", e.target.value)}
+              value={form.phoneNumber}
+              onChange={(e) => set("phoneNumber", e.target.value)}
             />
           </Field>
         </CardContent>

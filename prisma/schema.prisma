@@ -13,7 +13,6 @@ model User {
   password String
   tenant Tenant?
   role Role?
-  properties Property[]
 }
 
 enum UserRole {
@@ -33,14 +32,12 @@ model Property {
   name String
   address String
   ownerId Int
-  owner User @relation(fields: [ownerId], references: [id])
   leases Lease[]
 }
 
 model Tenant {
   id Int @id @default(autoincrement())
   name String
-  email String @unique
   phoneNumber String
   userId Int @unique
   user User @relation(fields: [userId], references: [id])
@@ -50,10 +47,8 @@ model Tenant {
 model Lease {
   id Int @id @default(autoincrement())
   propertyId Int
-  rentalPrice Float
-  tenantCount Int @default(1)
+  rentalPrice BigInt
   property Property @relation(fields: [propertyId], references: [id])
-  tenantId Int
   tenants Tenant[]
   startDate DateTime
   endDate DateTime
@@ -67,9 +62,18 @@ enum PaymentStatus {
   FAILED
 }
 
+model Period {
+  id Int @id @default(autoincrement())
+  name String
+  startDate DateTime
+  endDate DateTime
+}
+
 model Payment {
   id Int @id @default(autoincrement())
   leaseId Int
+  amount BigInt
+  paymentDate DateTime @default(now())
   lease Lease @relation(fields: [leaseId], references: [id])
   status PaymentStatus @default(PENDING)
 }

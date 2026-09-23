@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/form-controls";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
-import { formatCurrency } from "@/lib/domain";
 import { useParams } from "next/navigation";
 import type { Lease } from "@/lib/types";
 import { landlordRoutes } from "@/lib/routes";
@@ -21,15 +20,22 @@ const emptyData: AppData = {
   tenantPayments: [],
 };
 
-function PaymentPeriodForm({ lease }: { lease: Lease }) {
-  const [form, setForm] = useState({ startDate: "", endDate: "", dueDate: "" });
+function PeriodForm({ lease }: { lease: Lease }) {
+  const [form, setForm] = useState({ name: "", startDate: "", endDate: "" });
   return (
     <form className="space-y-5">
       <Card>
         <CardHeader>
-          <CardTitle>Period dates</CardTitle>
+          <CardTitle>Period information</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
+          <Field label="Period name">
+            <Input
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </Field>
           <Field label="Period start">
             <Input
               required
@@ -46,22 +52,8 @@ function PaymentPeriodForm({ lease }: { lease: Lease }) {
               onChange={(e) => setForm({ ...form, endDate: e.target.value })}
             />
           </Field>
-          <Field label="Due date">
-            <Input
-              required
-              type="date"
-              value={form.dueDate}
-              onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-            />
-          </Field>
         </CardContent>
       </Card>
-      <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
-        This will create {lease.tenantIds.length} payment record
-        {lease.tenantIds.length === 1 ? "" : "s"} totalling{" "}
-        {formatCurrency(lease.totalRentCents)}. Amounts are saved as a snapshot.
-      </div>
-
       <div className="flex justify-end gap-3">
         <Link href={landlordRoutes.lease(lease.apartmentId, lease.id)}>
           <Button type="button" variant="outline">
@@ -69,7 +61,7 @@ function PaymentPeriodForm({ lease }: { lease: Lease }) {
           </Button>
         </Link>
         <Button type="button" disabled>
-          Create payment period
+          Create period
         </Button>
       </div>
     </form>
@@ -94,10 +86,10 @@ export default function Page() {
     <div className="space-y-6">
       <BackLink href={landlordRoutes.lease(apartmentId, leaseId)} />
       <PageHeader
-        title="Create payment period"
-        description="Generate a fixed payment record for every tenant on this lease."
+        title="Create period"
+        description="Set the name and dates for this period."
       />
-      <PaymentPeriodForm lease={lease} />
+      <PeriodForm lease={lease} />
     </div>
   );
 }

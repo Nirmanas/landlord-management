@@ -12,6 +12,7 @@ export const loginSchema = z.object({
 export const registerSchema = z
   .object({
     name: z.string().trim().min(2, "Enter your full name."),
+    phoneNumber: z.string().trim().min(1, "Enter your phone number."),
     email: z
       .string()
       .trim()

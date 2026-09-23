@@ -22,7 +22,13 @@ export default function Page() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      name: "",
+      phoneNumber: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   async function onSubmit(data: RegisterValues) {
@@ -32,6 +38,7 @@ export default function Page() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: data.name,
+          phoneNumber: data.phoneNumber,
           email: data.email,
           password: data.password,
         }),
@@ -63,6 +70,22 @@ export default function Page() {
             required
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? "name-error" : undefined}
+          />
+        </AuthField>
+
+        <AuthField
+          id="phoneNumber"
+          label="Phone number"
+          error={errors.phoneNumber?.message}
+        >
+          <Input
+            id="phoneNumber"
+            {...register("phoneNumber")}
+            type="tel"
+            autoComplete="tel"
+            required
+            aria-invalid={Boolean(errors.phoneNumber)}
+            aria-describedby={errors.phoneNumber ? "phoneNumber-error" : undefined}
           />
         </AuthField>
 

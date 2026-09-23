@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, Field, Input } from "@/components/ui/form-controls";
+import { Field, Input } from "@/components/ui/form-controls";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { formatCurrency, splitRent } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
@@ -22,20 +22,21 @@ const emptyData: AppData = {
   tenantPayments: [],
 };
 
+type LeaseFields = Pick<Lease, "startDate" | "endDate" | "tenantIds"> & {
+  rentalPrice: number;
+};
+
 function LeaseForm({ apartment }: { apartment: Apartment }) {
   const data = emptyData;
-  const [form, setForm] = useState<Lease>({
-    id: "",
-    apartmentId: apartment.id,
+  const [form, setForm] = useState<LeaseFields>({
     startDate: "",
     endDate: "",
-    status: "upcoming",
-    totalRentCents: 0,
+    rentalPrice: 0,
     tenantIds: [],
   });
-  const set = <K extends keyof Lease>(key: K, value: Lease[K]) =>
+  const set = <K extends keyof LeaseFields>(key: K, value: LeaseFields[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
-  const shares = splitRent(form.totalRentCents, form.tenantIds);
+  const shares = splitRent(form.rentalPrice, form.tenantIds);
   function toggleTenant(id: string) {
     set(
       "tenantIds",
@@ -55,16 +56,6 @@ function LeaseForm({ apartment }: { apartment: Apartment }) {
             <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
               {apartment.name}
             </p>
-          </Field>
-          <Field label="Status">
-            <Select
-              value={form.status}
-              onChange={(e) => set("status", e.target.value as Lease["status"])}
-            >
-              <option value="upcoming">Upcoming</option>
-              <option value="active">Active</option>
-              <option value="ended">Ended</option>
-            </Select>
           </Field>
           <Field label="Start date">
             <Input
@@ -88,9 +79,9 @@ function LeaseForm({ apartment }: { apartment: Apartment }) {
               type="number"
               min="0.01"
               step="0.01"
-              value={form.totalRentCents ? form.totalRentCents / 100 : ""}
+              value={form.rentalPrice ? form.rentalPrice / 100 : ""}
               onChange={(e) =>
-                set("totalRentCents", Math.round(Number(e.target.value) * 100))
+                set("rentalPrice", Math.round(Number(e.target.value) * 100))
               }
             />
           </Field>
@@ -132,7 +123,7 @@ function LeaseForm({ apartment }: { apartment: Apartment }) {
                       {tenantName(tenant)}
                     </span>
                     <span className="block text-xs text-zinc-500">
-                      {tenant.email}
+                      {tenant.phone}
                     </span>
                   </span>
                 </span>

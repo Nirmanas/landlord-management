@@ -63,18 +63,20 @@ export function Textarea({
 
 export function Field({
   label,
+  htmlFor,
   children,
   error,
   className,
 }: {
   label: string;
+  htmlFor?: string;
   children: React.ReactNode;
   error?: string;
   className?: string;
 }) {
   return (
     <div className={className}>
-      <Label>{label}</Label>
+      <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
     </div>
