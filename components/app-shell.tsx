@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Building2 className="size-5" />
           </div>
           <div>
-            <p className="font-semibold text-zinc-950">Tenancy</p>
+            <p className="font-semibold text-zinc-950">LandLord Management</p>
             <p className="text-xs text-zinc-500">Property management</p>
           </div>
         </div>
@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Menu className="size-5" />
             </Button>
             <div className="mr-auto lg:hidden">
-              <p className="font-semibold text-zinc-950">Tenancy</p>
+              <p className="font-semibold text-zinc-950">LLM</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
               {isTenant && (
