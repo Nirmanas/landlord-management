@@ -1,3 +1,5 @@
+LandLordMan (LLM) — a web application for managing rental properties, tenants, leases, and payments, with dedicated dashboards for landlords and tenants.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LandLord Management",
+  title: "LandLordMan",
   description: "Stay on top of your rental agreements and payments.",
 };
 
