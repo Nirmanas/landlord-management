@@ -9,16 +9,19 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Enter your password."),
 });
 
-export const registerSchema = z
-  .object({
-    name: z.string().trim().min(2, "Enter your full name."),
-    phoneNumber: z.string().trim().min(1, "Enter your phone number."),
-    email: z
-      .string()
-      .trim()
-      .min(1, "Enter your email address.")
-      .email("Enter a valid email address."),
-    password: z.string().min(8, "Use at least 8 characters."),
+export const registerRequestSchema = z.object({
+  name: z.string().trim().min(2, "Enter your full name."),
+  phoneNumber: z.string().trim().min(1, "Enter your phone number."),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter your email address.")
+    .email("Enter a valid email address."),
+  password: z.string().min(8, "Use at least 8 characters."),
+});
+
+export const registerSchema = registerRequestSchema
+  .extend({
     confirmPassword: z.string().min(1, "Confirm your password."),
   })
   .refine((data) => data.password === data.confirmPassword, {
