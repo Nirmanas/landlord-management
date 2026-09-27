@@ -4,12 +4,13 @@ import { useParams } from "next/navigation";
 import { ApartmentForm } from "@/components/apartment-form";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { landlordRoutes } from "@/lib/routes";
-import { useAppData } from "@/components/data-provider";
+import { useApiItem } from "@/components/data-provider";
 
 export default function Page() {
   const { apartment: id } = useParams<{ apartment: string }>();
-  const data = useAppData();
-  const record = data.apartments.find((item) => item.id === id);
+  const { data: record, loading, error } = useApiItem("apartments", id);
+  if (loading) return <p role="status">Loading apartment…</p>;
+  if (error && !record) return <p role="alert">{error}</p>;
   if (!record) {
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
   }

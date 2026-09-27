@@ -13,11 +13,13 @@ import {
 } from "@/lib/apartment-schema";
 import { landlordRoutes } from "@/lib/routes";
 import type { Apartment } from "@/lib/types";
-import { saveApartment } from "@/app/actions";
+import { apiPath, apiRequest } from "@/lib/api-client";
+import { useReloadAppData } from "@/components/data-provider";
 import { useState } from "react";
 
 export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
   const router = useRouter();
+  const reload = useReloadAppData();
   const [serverError, setServerError] = useState("");
   const {
     register,
@@ -33,10 +35,14 @@ export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
 
   async function onSubmit(values: ApartmentFormValues) {
     setServerError("");
-    const result = await saveApartment(values, apartment?.id);
-    if (!result.ok) return setServerError(result.error);
-    router.push(landlordRoutes.apartment(result.id!));
-    router.refresh();
+    try {
+      const saved = await apiRequest<Apartment>(apiPath("apartments", apartment?.id), apartment ? "PUT" : "POST", values);
+      const destination = landlordRoutes.apartment(saved.id);
+      try { await reload(); router.push(destination); }
+      catch { window.location.assign(destination); }
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : "The request failed.");
+    }
   }
 
   return (

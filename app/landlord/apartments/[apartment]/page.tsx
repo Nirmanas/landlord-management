@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
+import { useAppData, useApiItem } from "@/components/data-provider";
 import { ArchiveButton } from "@/components/action-buttons";
 
 
@@ -22,7 +22,9 @@ import { useParams } from "next/navigation";
 export default function Page() {
   const { apartment: id } = useParams<{ apartment: string }>();
   const data = useAppData();
-  const apartment = data.apartments.find((a) => a.id === id);
+  const { data: apartment, loading, error } = useApiItem("apartments", id);
+  if (loading) return <p role="status">Loading apartment…</p>;
+  if (error && !apartment) return <p role="alert">{error}</p>;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
   const leases = data.leases.filter((l) => l.apartmentId === id);

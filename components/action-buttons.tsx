@@ -3,20 +3,32 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { archiveRecord, confirmPayment, reportPayment } from "@/app/actions";
+import { apiPath, apiRequest } from "@/lib/api-client";
+import { useReloadAppData } from "@/components/data-provider";
 import { Button } from "@/components/ui/button";
 
 export function ArchiveButton({ kind, id, destination }: { kind: "apartment" | "tenant" | "lease" | "period"; id: string; destination: string }) {
   const router = useRouter();
+  const reload = useReloadAppData();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function archive() {
     if (!window.confirm(`Archive this ${kind}? It will remain in history and cannot be restored here.`)) return;
     setBusy(true);
-    const result = await archiveRecord(kind, id);
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    router.push(destination);
-    router.refresh();
+    try {
+      if (kind === "tenant") {
+        const result = await archiveRecord(kind, id);
+        if (!result.ok) throw new Error(result.error);
+      } else {
+        await apiRequest(apiPath(kind === "apartment" ? "apartments" : kind === "lease" ? "leases" : "periods", id), "DELETE");
+        try { await reload(); }
+        catch { window.location.assign(destination); return; }
+      }
+      router.push(destination);
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The request failed.");
+    } finally { setBusy(false); }
   }
   return <span className="inline-flex flex-col gap-1"><Button type="button" variant="danger" onClick={archive} disabled={busy}>Archive {kind}</Button>{error && <span role="alert" className="text-xs text-rose-700">{error}</span>}</span>;
 }

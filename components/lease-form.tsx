@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { saveLease } from "@/app/actions";
-import { useAppData } from "@/components/data-provider";
+import { useAppData, useReloadAppData } from "@/components/data-provider";
+import { apiPath, apiRequest } from "@/lib/api-client";
 import { formatCurrency, splitRent, tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 import type { Apartment, Lease } from "@/lib/types";
@@ -15,6 +15,7 @@ import { Field, Input, Select } from "@/components/ui/form-controls";
 export function LeaseForm({ apartment, lease }: { apartment: Apartment; lease?: Lease }) {
   const data = useAppData();
   const router = useRouter();
+  const reload = useReloadAppData();
   const [startDate, setStartDate] = useState(lease?.startDate ?? "");
   const [endDate, setEndDate] = useState(lease?.endDate ?? "");
   const [rentalPrice, setRentalPrice] = useState(lease ? String(lease.totalRentCents / 100) : "");
@@ -32,10 +33,14 @@ export function LeaseForm({ apartment, lease }: { apartment: Apartment; lease?: 
   }
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
-    const result = await saveLease(apartment.id, { startDate, endDate, rentalPrice: cents, tenantIds }, lease?.id);
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    router.push(landlordRoutes.lease(apartment.id, result.id!)); router.refresh();
+    try {
+      const saved = await apiRequest<Lease>(apiPath("leases", lease?.id), lease ? "PUT" : "POST", { apartmentId: apartment.id, startDate, endDate, rentalPrice: cents, tenantIds });
+      const destination = landlordRoutes.lease(apartment.id, saved.id);
+      try { await reload(); router.push(destination); }
+      catch { window.location.assign(destination); }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The request failed.");
+    } finally { setBusy(false); }
   }
   return <form onSubmit={submit} className="space-y-5">
     <Card><CardHeader><CardTitle>Lease information</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">

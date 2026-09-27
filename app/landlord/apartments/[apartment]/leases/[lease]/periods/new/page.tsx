@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createPeriod } from "@/app/actions";
-import { useAppData } from "@/components/data-provider";
+import { useAppData, useReloadAppData } from "@/components/data-provider";
+import { apiPath, apiRequest } from "@/lib/api-client";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/form-controls";
 import { Button } from "@/components/ui/button";
 import { landlordRoutes } from "@/lib/routes";
-import type { Lease } from "@/lib/types";
+import type { Lease, PaymentPeriod } from "@/lib/types";
 
 function PeriodForm({ lease }: { lease: Lease }) {
   const router = useRouter();
+  const reload = useReloadAppData();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -20,10 +21,14 @@ function PeriodForm({ lease }: { lease: Lease }) {
   const [error, setError] = useState("");
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
-    const result = await createPeriod(lease.id, { name, startDate, endDate });
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    router.push(landlordRoutes.period(lease.apartmentId, lease.id, result.id!)); router.refresh();
+    try {
+      const saved = await apiRequest<PaymentPeriod>(apiPath("periods"), "POST", { leaseId: lease.id, name, startDate, endDate });
+      const destination = landlordRoutes.period(lease.apartmentId, lease.id, saved.id);
+      try { await reload(); router.push(destination); router.refresh(); }
+      catch { window.location.assign(destination); }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The request failed.");
+    } finally { setBusy(false); }
   }
   return <form onSubmit={submit} className="space-y-5"><Card><CardHeader><CardTitle>Period information</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-3">
     <Field label="Period name"><Input required value={name} onChange={(e) => setName(e.target.value)} /></Field>

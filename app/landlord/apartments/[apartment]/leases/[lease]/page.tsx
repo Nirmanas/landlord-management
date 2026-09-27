@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
+import { useAppData, useApiItem } from "@/components/data-provider";
 import { ArchiveButton, ConfirmPaymentButton } from "@/components/action-buttons";
 import { useState } from "react";
 
@@ -30,13 +30,13 @@ export default function Page() {
     lease: string;
   }>();
   const data = useAppData();
+  const { data: lease, loading, error } = useApiItem("leases", leaseId);
   const apartment = data.apartments.find((item) => item.id === apartmentId);
+  if (loading) return <p role="status">Loading lease…</p>;
+  if (error && !lease) return <p role="alert">{error}</p>;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  const lease = data.leases.find(
-    (item) => item.id === leaseId && item.apartmentId === apartmentId,
-  );
-  if (!lease)
+  if (!lease || lease.apartmentId !== apartmentId)
     return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
   const archivedLease = Boolean(lease.archivedAt || apartment.archivedAt);
   const periods = data.paymentPeriods

@@ -1,6 +1,11 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
+import { useAppData, useApiItem, useReloadAppData } from "@/components/data-provider";
+import { apiPath, apiRequest } from "@/lib/api-client";
+import type { PaymentPeriod } from "@/lib/types";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/form-controls";
 import { ArchiveButton, ConfirmPaymentButton } from "@/components/action-buttons";
 
 import { useParams } from "next/navigation";
@@ -18,9 +23,15 @@ import { formatCurrency, formatDate, tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 
 export default function Page() {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const reloadData = useReloadAppData();
   const { apartment: apartmentId, lease: leaseId, period: periodId } =
     useParams<{ apartment: string; lease: string; period: string }>();
   const data = useAppData();
+  const { data: period, loading, error, reload: reloadPeriod } = useApiItem("periods", periodId);
   const apartment = data.apartments.find((item) => item.id === apartmentId);
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
@@ -29,10 +40,9 @@ export default function Page() {
   );
   if (!lease)
     return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
-  const period = data.paymentPeriods.find(
-    (item) => item.id === periodId && item.leaseId === leaseId,
-  );
-  if (!period)
+  if (loading) return <p role="status">Loading payment period…</p>;
+  if (error && !period) return <p role="alert">{error}</p>;
+  if (!period || period.leaseId !== leaseId)
     return (
       <NotFoundState
         noun="Payment period"
@@ -44,6 +54,17 @@ export default function Page() {
       payment.paymentPeriodId === periodId && payment.leaseId === leaseId,
   );
   const total = payments.reduce((sum, payment) => sum + payment.amountCents, 0);
+  async function saveName(event: React.FormEvent) {
+    event.preventDefault(); setSaving(true); setSaveError("");
+    try {
+      await apiRequest<PaymentPeriod>(apiPath("periods", periodId), "PUT", { name });
+      await reloadData();
+      reloadPeriod();
+      setEditing(false);
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : "The request failed.");
+    } finally { setSaving(false); }
+  }
 
   return (
     <div className="space-y-6">
@@ -54,6 +75,13 @@ export default function Page() {
         title={period.name}
         description={<><DateRange start={period.startDate} end={period.endDate} />{period.archivedAt ? " · Archived" : ""}</>}
       />
+      {!period.archivedAt && !lease.archivedAt && !apartment.archivedAt && (editing ?
+        <form onSubmit={saveName} className="flex max-w-md flex-wrap items-center gap-2">
+          <Input aria-label="Period name" required value={name} onChange={(event) => setName(event.target.value)} />
+          <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save name"}</Button>
+          <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
+          {saveError && <p role="alert">{saveError}</p>}
+        </form> : <Button type="button" variant="outline" onClick={() => { setName(period.name); setEditing(true); }}>Edit period name</Button>)}
       {!period.archivedAt && !lease.archivedAt && !apartment.archivedAt && <ArchiveButton kind="period" id={periodId} destination={landlordRoutes.lease(apartmentId, leaseId)} />}
       <Card>
         <CardHeader>
