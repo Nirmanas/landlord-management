@@ -24,6 +24,12 @@ export async function login(email: string, password: string): Promise<void> {
       email: email,
       password: hashedPassword,
     },
+    select: {
+      id: true,
+      email: true,
+      tenant: { select: { id: true, name: true } },
+      role: { select: { role: true } },
+    },
   });
 
   if (!user) {

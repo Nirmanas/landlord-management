@@ -1,17 +1,16 @@
 "use server";
-import { User } from "../generated/prisma/browser";
-import { prisma } from "../prisma";
+import { Tenant, User, UserRole } from "../generated/prisma/client";
 import { hashValue, verifyHash } from "./crypto";
 
 type TokenPayload = {
   user: {
     id: number;
     email: string;
+    role: UserRole;
   };
   tenant: {
     id: number;
     name: string;
-    userId: number;
   };
   iat: number;
   exp: number;
@@ -25,24 +24,19 @@ const header = btoa(
 );
 
 export async function generateToken(
-  user: User,
+  user: Omit<User, "password"> & {
+    tenant: Pick<Tenant, "id" | "name"> | null;
+  } & {
+    role: { role: UserRole } | null;
+  },
   duration: number = 60 * 60 * 24,
 ): Promise<string> {
-  const tenant = await prisma.tenant.findFirst({
-    where: {
-      userId: user.id,
-    },
-  });
-
-  if (!tenant) {
-    throw new Error("Tenant not found for user");
+  if (!user.tenant) {
+    throw new Error("User does not have a tenant.");
   }
-
   const payload: TokenPayload = {
-    user: { id: user.id, email: user.email },
-    tenant: {
-      ...tenant,
-    },
+    user: { id: user.id, email: user.email, role: user.role?.role ?? "TENANT" },
+    tenant: user.tenant,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + duration,
   };
