@@ -8,10 +8,6 @@ type TokenPayload = {
     email: string;
     role: UserRole;
   };
-  tenant: {
-    id: number;
-    name: string;
-  };
   iat: number;
   exp: number;
 };
@@ -31,12 +27,9 @@ export async function generateToken(
   },
   duration: number = 60 * 60 * 24,
 ): Promise<string> {
-  if (!user.tenant) {
-    throw new Error("User does not have a tenant.");
-  }
+  if (!user.role) throw new Error("User does not have a role.");
   const payload: TokenPayload = {
-    user: { id: user.id, email: user.email, role: user.role?.role ?? "TENANT" },
-    tenant: user.tenant,
+    user: { id: user.id, email: user.email, role: user.role.role },
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + duration,
   };
@@ -48,18 +41,16 @@ export async function generateToken(
   return `${header}.${payloadString}.${Buffer.from(signature).toString("base64")}`;
 }
 
-export async function verifyToken(
-  token: string,
-): Promise<Omit<User, "password"> | null> {
-  const [header, payload, signature] = token.split(".");
-
-  const computedSignature = await verifyHash(`${header}.${payload}`, signature);
-
-  if (!computedSignature) {
+export async function verifyToken(token: string): Promise<TokenPayload["user"] | null> {
+  try {
+    const [tokenHeader, payload, signature, extra] = token.split(".");
+    if (!tokenHeader || !payload || !signature || extra || tokenHeader !== header) return null;
+    if (!(await verifyHash(`${tokenHeader}.${payload}`, signature))) return null;
+    const decoded: TokenPayload = JSON.parse(Buffer.from(payload, "base64").toString("utf-8"));
+    if (!Number.isInteger(decoded.exp) || decoded.exp <= Date.now() / 1000) return null;
+    if (!Number.isInteger(decoded.user?.id) || !["LANDLORD", "TENANT"].includes(decoded.user.role)) return null;
+    return decoded.user;
+  } catch {
     return null;
   }
-  const decodedPayload: TokenPayload = JSON.parse(
-    Buffer.from(payload, "base64").toString("utf-8"),
-  );
-  return decodedPayload.user;
 }

@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { ArchiveButton } from "@/components/action-buttons";
+
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -17,17 +19,9 @@ import { formatCurrency } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 import { useParams } from "next/navigation";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
   const { apartment: id } = useParams<{ apartment: string }>();
-  const data = emptyData;
+  const data = useAppData();
   const apartment = data.apartments.find((a) => a.id === id);
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
@@ -38,18 +32,19 @@ export default function Page() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
           title={apartment.name}
-          description={`${apartment.address}, ${apartment.city}, ${apartment.postalCode}`}
+          description={`${apartment.address}${apartment.archivedAt ? " · Archived" : ""}`}
         />
         <div className="flex flex-wrap gap-2">
           <Link href={landlordRoutes.leases(id)}>
             <Button variant="outline">View leases</Button>
           </Link>
-          <Link href={landlordRoutes.newLease(id)}>
+          {!apartment.archivedAt && <Link href={landlordRoutes.newLease(id)}>
             <Button>New lease</Button>
-          </Link>
-          <Link href={landlordRoutes.apartmentEdit(id)}>
+          </Link>}
+          {!apartment.archivedAt && <Link href={landlordRoutes.apartmentEdit(id)}>
             <Button variant="outline">Edit apartment</Button>
-          </Link>
+          </Link>}
+          {!apartment.archivedAt && <ArchiveButton kind="apartment" id={id} destination="/landlord/apartments" />}
         </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
@@ -58,19 +53,7 @@ export default function Page() {
             <CardTitle>Property details</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-5">
-              <DetailItem label="Bedrooms">{apartment.bedrooms}</DetailItem>
-              <DetailItem label="Bathrooms">{apartment.bathrooms}</DetailItem>
-              <DetailItem label="City">{apartment.city}</DetailItem>
-              <DetailItem label="Postal code">
-                {apartment.postalCode}
-              </DetailItem>
-              <div className="col-span-2">
-                <DetailItem label="Notes">
-                  {apartment.notes || "No notes"}
-                </DetailItem>
-              </div>
-            </dl>
+            <dl><DetailItem label="Address">{apartment.address}</DetailItem></dl>
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
@@ -99,7 +82,7 @@ export default function Page() {
                         {formatCurrency(lease.totalRentCents)}
                       </p>
                     </div>
-                    <Badge tone={lease.status}>{lease.status}</Badge>
+                    <Badge tone={lease.archivedAt || apartment.archivedAt ? "neutral" : lease.status}>{lease.archivedAt || apartment.archivedAt ? "Archived" : lease.status}</Badge>
                   </Link>
                 ))}
               </div>

@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { ConfirmPaymentButton } from "@/components/action-buttons";
+
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -16,21 +18,13 @@ import { formatCurrency, formatDate, isOverdue } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 const tableClass = "w-full min-w-175 text-left text-sm";
 const thClass =
   "border-b border-zinc-200 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500";
 const tdClass = "border-b border-zinc-100 px-4 py-4 text-zinc-700";
 
 export default function Page() {
-  const data = emptyData;
+  const data = useAppData();
   const [filters, setFilters] = useState({
     apartment: "",
     lease: "",
@@ -126,6 +120,7 @@ export default function Page() {
             <option value="overdue">Overdue</option>
             <option value="pending">Pending</option>
             <option value="confirmed">Confirmed</option>
+            <option value="failed">Failed</option>
           </Select>
         </CardContent>
       </Card>
@@ -185,7 +180,7 @@ export default function Page() {
                         <PaymentBadge payment={payment} period={period} />
                       </td>
                       <td className={tdClass}>
-                        {lease && period && (
+                        <div className="flex items-center gap-3">{lease && period && (
                           <Link
                             href={landlordRoutes.period(
                               lease.apartmentId,
@@ -196,7 +191,7 @@ export default function Page() {
                           >
                             View period
                           </Link>
-                        )}
+                        )}{payment.status === "pending" && <ConfirmPaymentButton id={payment.id} />}</div>
                       </td>
                     </tr>
                   );

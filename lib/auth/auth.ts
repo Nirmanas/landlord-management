@@ -1,19 +1,22 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { User, UserRole } from "../generated/prisma/browser";
-import { redirect } from "next/navigation";
+import { UserRole } from "../generated/prisma/browser";
 import { prisma } from "../prisma";
 import { generateToken, verifyToken } from "./jwt";
 import { hashValue, toHexString } from "./crypto";
 
 // TODO: add refresh later
-export default async function auth(): Promise<Omit<User, "password"> | null> {
+export default async function auth(): Promise<{ id: number; email: string; role: UserRole } | null> {
   const authCookie = (await cookies()).get("auth");
   if (!authCookie) {
     return null;
   }
-  return verifyToken(authCookie.value);
+  const tokenUser = await verifyToken(authCookie.value);
+  if (!tokenUser) return null;
+  const user = await prisma.user.findUnique({ where: { id: tokenUser.id }, select: { id: true, email: true, role: { select: { role: true } } } });
+  if (!user?.role || user.role.role !== tokenUser.role) return null;
+  return { id: user.id, email: user.email, role: user.role.role };
 }
 
 export async function login(email: string, password: string): Promise<void> {
@@ -21,7 +24,7 @@ export async function login(email: string, password: string): Promise<void> {
 
   const user = await prisma.user.findFirst({
     where: {
-      email: email,
+      email: email.trim().toLowerCase(),
       password: hashedPassword,
     },
     select: {
@@ -47,7 +50,6 @@ export async function login(email: string, password: string): Promise<void> {
 
 export async function logout(): Promise<void> {
   (await cookies()).delete("auth");
-  redirect("/");
 }
 
 export async function register(
@@ -61,7 +63,7 @@ export async function register(
     (await prisma.user.count()) === 0 ? "LANDLORD" : "TENANT";
   const user = await prisma.user.create({
     data: {
-      email: email,
+      email: email.trim().toLowerCase(),
       password: await getHexValue(password),
     },
   });

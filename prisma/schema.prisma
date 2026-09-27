@@ -13,6 +13,7 @@ model User {
   password String
   tenant Tenant?
   role Role? 
+  properties Property[] @relation("OwnedProperties")
 }
 
 enum UserRole {
@@ -32,7 +33,9 @@ model Property {
   name String
   address String
   ownerId Int
+  owner User @relation("OwnedProperties", fields: [ownerId], references: [id])
   leases Lease[]
+  archivedAt DateTime?
 }
 
 model Tenant {
@@ -42,6 +45,8 @@ model Tenant {
   userId Int @unique
   user User @relation(fields: [userId], references: [id])
   leases Lease[]
+  payments Payment[]
+  archivedAt DateTime?
 }
 
 model Lease {
@@ -53,6 +58,8 @@ model Lease {
   startDate DateTime
   endDate DateTime
   payments Payment[]
+  periods Period[]
+  archivedAt DateTime?
 }
 
 enum PaymentStatus {
@@ -64,9 +71,14 @@ enum PaymentStatus {
 
 model Period {
   id Int @id @default(autoincrement())
+  leaseId Int
+  lease Lease @relation(fields: [leaseId], references: [id])
   name String
   startDate DateTime
   endDate DateTime
+  dueDate DateTime
+  payments Payment[]
+  archivedAt DateTime?
 }
 
 model Payment {
@@ -75,5 +87,11 @@ model Payment {
   amount BigInt
   paymentDate DateTime @default(now())
   lease Lease @relation(fields: [leaseId], references: [id])
+  periodId Int
+  period Period @relation(fields: [periodId], references: [id])
+  tenantId Int
+  tenant Tenant @relation(fields: [tenantId], references: [id])
   status PaymentStatus @default(PENDING)
+
+  @@unique([periodId, tenantId])
 }

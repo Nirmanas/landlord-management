@@ -10,11 +10,14 @@ import { AuthField, PasswordField } from "@/components/auth/auth-fields";
 import { loginSchema } from "@/components/auth/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-controls";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type LoginValues = z.infer<typeof loginSchema>;
 
 export default function Page() {
+  const router = useRouter();
+  const [serverError, setServerError] = useState("");
   const {
     register,
     handleSubmit,
@@ -25,6 +28,7 @@ export default function Page() {
   });
 
   const onSubmit = async (data: LoginValues) => {
+    setServerError("");
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -36,11 +40,14 @@ export default function Page() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Login failed:", errorData);
+        setServerError(errorData.error ?? "Sign in failed.");
       } else {
-        redirect("/");
+        router.replace("/");
+        router.refresh();
       }
-    } catch (e) {}
+    } catch {
+      setServerError("Could not connect. Please try again.");
+    }
   };
 
   return (
@@ -76,6 +83,7 @@ export default function Page() {
         <Button type="submit" className="w-full">
           Sign in <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
+        {serverError && <p role="alert" className="text-sm text-rose-700">{serverError}</p>}
       </form>
 
       <p className="mt-6 text-center text-sm text-zinc-600">

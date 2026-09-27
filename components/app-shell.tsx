@@ -1,18 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
   CreditCard,
   FileText,
   Home,
   Menu,
+  LogOut,
   Users,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/form-controls";
 import { cn } from "@/lib/utils";
 
 const landlordNav = [
@@ -61,9 +61,23 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const isTenant = pathname.startsWith("/tenant");
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  async function logOut() {
+    setLoggingOut(true);
+    setLogoutError("");
+    try {
+      const response = await fetch("/api/auth/login", { method: "DELETE" });
+      if (!response.ok) throw new Error("Could not log out.");
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      setLoggingOut(false);
+      setLogoutError("Could not log out. Please try again.");
+    }
+  }
   return (
     <div className="min-h-screen bg-zinc-50">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-zinc-200 bg-white lg:flex lg:flex-col">
@@ -95,16 +109,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="font-semibold text-zinc-950">LLM</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              {isTenant && (
-                <Select
-                  aria-label="Selected tenant"
-                  value=""
-                  disabled
-                  className="w-36 sm:w-56"
-                >
-                  <option value="">No tenants</option>
-                </Select>
-              )}
+              <Button type="button" variant="ghost" onClick={logOut} disabled={loggingOut}>
+                <LogOut className="size-4" /> {loggingOut ? "Logging out…" : "Log out"}
+              </Button>
+              {logoutError && <span role="alert" className="text-xs text-rose-700">{logoutError}</span>}
             </div>
           </div>
           {open && (

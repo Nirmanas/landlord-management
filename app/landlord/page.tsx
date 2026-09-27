@@ -1,6 +1,7 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+
 
 import Link from "next/link";
 import { Building2, ChevronRight } from "lucide-react";
@@ -11,16 +12,8 @@ import { formatCurrency, landlordMetrics } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
-  const data = emptyData;
+  const data = useAppData();
   const metrics = landlordMetrics(data);
   const pending = data.tenantPayments.filter((p) => p.status === "pending");
   return (
@@ -98,15 +91,15 @@ export default function Page() {
             <CardTitle>Portfolio snapshot</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {data.apartments.length === 0 && (
+            {data.apartments.filter((apartment) => !apartment.archivedAt).length === 0 && (
               <div className="py-6 text-center text-sm text-zinc-500">
                 No apartments yet. Add your first apartment to start your
                 portfolio.
               </div>
             )}
-            {data.apartments.map((apartment) => {
+            {data.apartments.filter((item) => !item.archivedAt).map((apartment) => {
               const active = data.leases.find(
-                (l) => l.apartmentId === apartment.id && l.status === "active",
+                (l) => l.apartmentId === apartment.id && l.status === "active" && !l.archivedAt,
               );
               return (
                 <Link

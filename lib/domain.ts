@@ -6,7 +6,7 @@ import type {
 } from "@/lib/types";
 
 export const tenantName = (tenant: Tenant) =>
-  `${tenant.firstName} ${tenant.lastName}`;
+  `${tenant.firstName} ${tenant.lastName}`.trim();
 
 export const formatCurrency = (cents: number) =>
   new Intl.NumberFormat("en-IE", {
@@ -30,9 +30,11 @@ export const todayISO = () => {
 export function splitRent(totalCents: number, tenantIds: string[]) {
   if (tenantIds.length === 0) return [];
   const base = Math.floor(totalCents / tenantIds.length);
+  const remainder = totalCents % tenantIds.length;
+  const sorted = [...tenantIds].sort((a, b) => Number(a) - Number(b));
   return tenantIds.map((tenantId) => ({
     tenantId,
-    amountCents: base,
+    amountCents: base + (sorted.indexOf(tenantId) < remainder ? 1 : 0),
   }));
 }
 
@@ -51,10 +53,10 @@ export function landlordMetrics(data: AppData) {
     (payment) => payment.status !== "confirmed",
   );
   return {
-    apartments: data.apartments.length,
-    activeLeases: data.leases.filter((lease) => lease.status === "active")
+    apartments: data.apartments.filter((apartment) => !apartment.archivedAt).length,
+    activeLeases: data.leases.filter((lease) => lease.status === "active" && !lease.archivedAt && !data.apartments.find((apartment) => apartment.id === lease.apartmentId)?.archivedAt)
       .length,
-    tenants: data.tenants.length,
+    tenants: data.tenants.filter((tenant) => !tenant.archivedAt).length,
     outstandingCount: outstanding.length,
     outstandingCents: outstanding.reduce(
       (total, payment) => total + payment.amountCents,

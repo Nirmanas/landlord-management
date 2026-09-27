@@ -1,15 +1,11 @@
 export type LeaseStatus = "upcoming" | "active" | "ended"
-export type PaymentStatus = "unpaid" | "pending" | "confirmed"
+export type PaymentStatus = "unpaid" | "pending" | "confirmed" | "failed"
 
 export interface Apartment {
   id: string
   name: string
   address: string
-  city: string
-  postalCode: string
-  bedrooms: number
-  bathrooms: number
-  notes: string
+  archivedAt: string | null
 }
 
 export interface Tenant {
@@ -18,6 +14,7 @@ export interface Tenant {
   lastName: string
   email: string
   phone: string
+  archivedAt: string | null
 }
 
 export interface Lease {
@@ -28,15 +25,17 @@ export interface Lease {
   status: LeaseStatus
   totalRentCents: number
   tenantIds: string[]
+  archivedAt: string | null
 }
 
 export interface PaymentPeriod {
   id: string
   leaseId: string
+  name: string
   startDate: string
   endDate: string
   dueDate: string
-  createdAt: string
+  archivedAt: string | null
 }
 
 export interface TenantPayment {
@@ -46,8 +45,6 @@ export interface TenantPayment {
   tenantId: string
   amountCents: number
   status: PaymentStatus
-  reportedAt?: string
-  confirmedAt?: string
 }
 
 export interface AppData {

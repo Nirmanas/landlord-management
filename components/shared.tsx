@@ -43,5 +43,5 @@ export function DetailItem({ label, children }: { label: string; children: React
 }
 
 export function NotFoundState({ noun, href }: { noun: string; href: string }) {
-  return <div><BackLink href={href} /><EmptyState title={`${noun} not found`} description={`This ${noun.toLowerCase()} does not exist in the current prototype session.`} /></div>
+  return <div><BackLink href={href} /><EmptyState title={`${noun} not found`} description={`This ${noun.toLowerCase()} is not available.`} /></div>
 }

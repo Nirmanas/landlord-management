@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { ArchiveButton } from "@/components/action-buttons";
+
 
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
@@ -18,17 +20,9 @@ import { tenantName } from "@/lib/domain";
 import { useParams } from "next/navigation";
 import { landlordRoutes } from "@/lib/routes";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const data = emptyData;
+  const data = useAppData();
   const tenant = data.tenants.find((t) => t.id === id);
   if (!tenant) return <NotFoundState noun="Tenant" href="/landlord/tenants" />;
   const leases = data.leases.filter((l) => l.tenantIds.includes(id));
@@ -38,11 +32,11 @@ export default function Page() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
           title={tenantName(tenant)}
-          description="Tenant profile and lease history"
+          description={tenant.archivedAt ? "Archived tenant profile and lease history" : "Tenant profile and lease history"}
         />
-        <Link href={`/landlord/tenants/${id}/edit`}>
+        <div className="flex gap-2">{!tenant.archivedAt && <Link href={`/landlord/tenants/${id}/edit`}>
           <Button variant="outline">Edit tenant</Button>
-        </Link>
+        </Link>}{!tenant.archivedAt && <ArchiveButton kind="tenant" id={id} destination="/landlord/tenants" />}</div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
         <Card>

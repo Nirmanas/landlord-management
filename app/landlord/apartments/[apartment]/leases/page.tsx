@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { useState } from "react";
+
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -11,41 +13,35 @@ import { formatCurrency } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 import { useParams } from "next/navigation";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 const tableClass = "w-full min-w-175 text-left text-sm";
 const thClass =
   "border-b border-zinc-200 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500";
 const tdClass = "border-b border-zinc-100 px-4 py-4 text-zinc-700";
 
 export default function Page() {
+  const [archived, setArchived] = useState(false);
   const { apartment: apartmentId } = useParams<{ apartment: string }>();
-  const data = emptyData;
+  const data = useAppData();
   const apartment = data.apartments.find((item) => item.id === apartmentId);
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  const leases = data.leases.filter((lease) => lease.apartmentId === apartmentId);
+  const leases = data.leases.filter((lease) => lease.apartmentId === apartmentId && Boolean(lease.archivedAt || apartment.archivedAt) === archived);
   return (
     <div className="space-y-6">
       <BackLink href={landlordRoutes.apartment(apartmentId)}>{apartment.name}</BackLink>
       <PageHeader
         title={`${apartment.name} leases`}
         description="Track agreements, rents, and tenant assignments."
-        actionHref={landlordRoutes.newLease(apartmentId)}
-        actionLabel="New lease"
+        actionHref={apartment.archivedAt ? undefined : landlordRoutes.newLease(apartmentId)}
+        actionLabel={apartment.archivedAt ? undefined : "New lease"}
       />
+      <Button variant="outline" type="button" onClick={() => setArchived((value) => !value)}>{archived ? "Show active" : "Show archived"}</Button>
       {leases.length === 0 ? (
         <EmptyState
-          title="No leases yet"
-          description="Create a tenant, then add this apartment’s first lease."
-          actionHref={landlordRoutes.newLease(apartmentId)}
-          actionLabel="Create lease"
+          title={archived ? "No archived leases" : "No leases yet"}
+          description={archived ? "Archived leases will appear here." : "Select a registered tenant when creating a lease."}
+          actionHref={archived || apartment.archivedAt ? undefined : landlordRoutes.newLease(apartmentId)}
+          actionLabel={archived || apartment.archivedAt ? undefined : "Create lease"}
         />
       ) : (
         <Card>
@@ -74,7 +70,7 @@ export default function Page() {
                     </td>
                     <td className={tdClass}>{lease.tenantIds.length}</td>
                     <td className={tdClass}>
-                      <Badge tone={lease.status}>{lease.status}</Badge>
+                      <Badge tone={archived ? "neutral" : lease.status}>{archived ? "Archived" : lease.status}</Badge>
                     </td>
                     <td className={`${tdClass} text-right`}>
                       <Link href={landlordRoutes.lease(apartmentId, lease.id)}>
@@ -82,11 +78,11 @@ export default function Page() {
                           View
                         </Button>
                       </Link>
-                      <Link href={landlordRoutes.leaseEdit(apartmentId, lease.id)}>
+                      {!lease.archivedAt && !apartment.archivedAt && <Link href={landlordRoutes.leaseEdit(apartmentId, lease.id)}>
                         <Button variant="ghost" size="sm">
                           Edit
                         </Button>
-                      </Link>
+                      </Link>}
                     </td>
                   </tr>
                 ))}

@@ -1,6 +1,7 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+
 
 import Link from "next/link";
 import { Building2, CalendarDays } from "lucide-react";
@@ -15,16 +16,8 @@ import {
 } from "@/components/shared";
 import { formatCurrency, formatDate, splitRent, todayISO } from "@/lib/domain";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
-  const data = emptyData;
+  const data = useAppData();
   const tenant = data.tenants[0];
   const leases = data.leases.filter((l) =>
     l.tenantIds.includes(tenant?.id ?? ""),
@@ -45,8 +38,8 @@ export default function Page() {
   if (!tenant)
     return (
       <EmptyState
-        title="No tenant selected"
-        description="Create a tenant in landlord mode, then return here to preview their experience."
+        title="Tenant profile unavailable"
+        description="Your account does not have a tenant profile. Contact the site administrator."
       />
     );
   const outstanding = payments.filter((p) => p.status !== "confirmed");
@@ -127,7 +120,7 @@ export default function Page() {
                     </Badge>
                   </div>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {apartment.address}, {apartment.city}
+                    {apartment.address}
                   </p>
                   <p className="mt-4 text-sm text-zinc-700">
                     <DateRange

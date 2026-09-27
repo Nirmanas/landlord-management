@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { ArchiveButton, ConfirmPaymentButton } from "@/components/action-buttons";
+
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,18 +17,10 @@ import {
 import { formatCurrency, formatDate, tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
   const { apartment: apartmentId, lease: leaseId, period: periodId } =
     useParams<{ apartment: string; lease: string; period: string }>();
-  const data = emptyData;
+  const data = useAppData();
   const apartment = data.apartments.find((item) => item.id === apartmentId);
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
@@ -57,9 +51,10 @@ export default function Page() {
         {apartment.name} lease
       </BackLink>
       <PageHeader
-        title="Payment period"
-        description={<DateRange start={period.startDate} end={period.endDate} />}
+        title={period.name}
+        description={<><DateRange start={period.startDate} end={period.endDate} />{period.archivedAt ? " · Archived" : ""}</>}
       />
+      {!period.archivedAt && !lease.archivedAt && !apartment.archivedAt && <ArchiveButton kind="period" id={periodId} destination={landlordRoutes.lease(apartmentId, leaseId)} />}
       <Card>
         <CardHeader>
           <CardTitle>Period summary</CardTitle>
@@ -96,7 +91,7 @@ export default function Page() {
                         {formatCurrency(payment.amountCents)}
                       </p>
                     </div>
-                    <PaymentBadge payment={payment} period={period} />
+                    <div className="flex items-center gap-2"><PaymentBadge payment={payment} period={period} />{payment.status === "pending" && <ConfirmPaymentButton id={payment.id} />}</div>
                   </div>
                 );
               })}

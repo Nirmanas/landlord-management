@@ -1,95 +1,44 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
-
-import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useParams, useRouter } from "next/navigation";
+import { createPeriod } from "@/app/actions";
+import { useAppData } from "@/components/data-provider";
+import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/form-controls";
-import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
-import { useParams } from "next/navigation";
-import type { Lease } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 import { landlordRoutes } from "@/lib/routes";
-
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
+import type { Lease } from "@/lib/types";
 
 function PeriodForm({ lease }: { lease: Lease }) {
-  const [form, setForm] = useState({ name: "", startDate: "", endDate: "" });
-  return (
-    <form className="space-y-5">
-      <Card>
-        <CardHeader>
-          <CardTitle>Period information</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <Field label="Period name">
-            <Input
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </Field>
-          <Field label="Period start">
-            <Input
-              required
-              type="date"
-              value={form.startDate}
-              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-            />
-          </Field>
-          <Field label="Period end">
-            <Input
-              required
-              type="date"
-              value={form.endDate}
-              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-            />
-          </Field>
-        </CardContent>
-      </Card>
-      <div className="flex justify-end gap-3">
-        <Link href={landlordRoutes.lease(lease.apartmentId, lease.id)}>
-          <Button type="button" variant="outline">
-            Cancel
-          </Button>
-        </Link>
-        <Button type="button" disabled>
-          Create period
-        </Button>
-      </div>
-    </form>
-  );
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setBusy(true); setError("");
+    const result = await createPeriod(lease.id, { name, startDate, endDate });
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    router.push(landlordRoutes.period(lease.apartmentId, lease.id, result.id!)); router.refresh();
+  }
+  return <form onSubmit={submit} className="space-y-5"><Card><CardHeader><CardTitle>Period information</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-3">
+    <Field label="Period name"><Input required value={name} onChange={(e) => setName(e.target.value)} /></Field>
+    <Field label="Period start"><Input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
+    <Field label="Period end and due date"><Input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
+  </CardContent></Card>{error && <p role="alert" className="text-sm text-rose-700">{error}</p>}<Button type="submit" disabled={busy}>{busy ? "Creating…" : "Create period"}</Button></form>;
 }
 
 export default function Page() {
-  const { apartment: apartmentId, lease: leaseId } = useParams<{
-    apartment: string;
-    lease: string;
-  }>();
-  const data = emptyData;
+  const { apartment: apartmentId, lease: leaseId } = useParams<{ apartment: string; lease: string }>();
+  const data = useAppData();
   const apartment = data.apartments.find((item) => item.id === apartmentId);
-  if (!apartment)
-    return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  const lease = data.leases.find(
-    (item) => item.id === leaseId && item.apartmentId === apartmentId,
-  );
-  if (!lease)
-    return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
-  return (
-    <div className="space-y-6">
-      <BackLink href={landlordRoutes.lease(apartmentId, leaseId)} />
-      <PageHeader
-        title="Create period"
-        description="Set the name and dates for this period."
-      />
-      <PeriodForm lease={lease} />
-    </div>
-  );
+  if (!apartment) return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
+  const lease = data.leases.find((item) => item.id === leaseId && item.apartmentId === apartmentId);
+  if (!lease) return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
+  if (lease.archivedAt || apartment.archivedAt) return <NotFoundState noun="Active lease" href={landlordRoutes.lease(apartmentId, leaseId)} />;
+  return <div className="space-y-6"><BackLink href={landlordRoutes.lease(apartmentId, leaseId)} /><PageHeader title="Create period" description="Set the name and dates; rent is due at the end of the period." /><PeriodForm lease={lease} /></div>;
 }

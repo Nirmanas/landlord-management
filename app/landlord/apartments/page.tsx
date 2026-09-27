@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { useState } from "react";
+
 
 import Link from "next/link";
 import { Building2 } from "lucide-react";
@@ -9,16 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState, PageHeader } from "@/components/shared";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
-  const data = emptyData;
+  const data = useAppData();
+  const [archived, setArchived] = useState(false);
+  const apartments = data.apartments.filter((item) => Boolean(item.archivedAt) === archived);
   return (
     <div className="space-y-6">
       <PageHeader
@@ -27,13 +23,14 @@ export default function Page() {
         actionHref="/landlord/apartments/new"
         actionLabel="New apartment"
       />
-      {data.apartments.length ? (
+      <Button variant="outline" type="button" onClick={() => setArchived((value) => !value)}>{archived ? "Show active" : "Show archived"}</Button>
+      {apartments.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {data.apartments.map((apartment) => {
+          {apartments.map((apartment) => {
             const leases = data.leases.filter(
               (l) => l.apartmentId === apartment.id,
             );
-            const active = leases.find((l) => l.status === "active");
+            const active = leases.find((l) => l.status === "active" && !l.archivedAt);
             return (
               <Card key={apartment.id}>
                 <CardHeader>
@@ -42,15 +39,14 @@ export default function Page() {
                   </div>
                   <CardTitle>{apartment.name}</CardTitle>
                   <p className="text-sm text-zinc-500">
-                    {apartment.address}, {apartment.city}
+                    {apartment.address}
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-5 flex items-center justify-between text-sm">
-                    <span className="text-zinc-500">
-                      {apartment.bedrooms} bed · {apartment.bathrooms} bath
-                    </span>
-                    {active ? (
+                  <div className="mb-5 flex justify-end text-sm">
+                    {apartment.archivedAt ? (
+                      <Badge>Archived</Badge>
+                    ) : active ? (
                       <Badge tone="active">Active lease</Badge>
                     ) : (
                       <Badge>No active lease</Badge>
@@ -65,14 +61,14 @@ export default function Page() {
                         View
                       </Button>
                     </Link>
-                    <Link
+                    {!apartment.archivedAt && <Link
                       href={`/landlord/apartments/${apartment.id}/edit`}
                       className="flex-1"
                     >
                       <Button variant="secondary" className="w-full">
                         Edit
                       </Button>
-                    </Link>
+                    </Link>}
                   </div>
                 </CardContent>
               </Card>
@@ -81,10 +77,10 @@ export default function Page() {
         </div>
       ) : (
         <EmptyState
-          title="No apartments yet"
-          description="Create your first property to start managing leases."
-          actionHref="/landlord/apartments/new"
-          actionLabel="Create apartment"
+          title={archived ? "No archived apartments" : "No apartments yet"}
+          description={archived ? "Archived apartments will appear here." : "Create your first property to start managing leases."}
+          actionHref={archived ? undefined : "/landlord/apartments/new"}
+          actionLabel={archived ? undefined : "Create apartment"}
         />
       )}
     </div>

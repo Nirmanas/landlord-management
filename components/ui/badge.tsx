@@ -9,6 +9,7 @@ const styles = {
   overdue: "bg-rose-100 text-rose-800",
   pending: "bg-blue-100 text-blue-800",
   confirmed: "bg-emerald-100 text-emerald-800",
+  failed: "bg-rose-100 text-rose-800",
 };
 
 export function Badge({

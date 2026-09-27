@@ -1,6 +1,9 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { ArchiveButton, ConfirmPaymentButton } from "@/components/action-buttons";
+import { useState } from "react";
+
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -20,20 +23,13 @@ import { tenantName } from "@/lib/domain";
 import { useParams } from "next/navigation";
 import { landlordRoutes } from "@/lib/routes";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
+  const [showArchived, setShowArchived] = useState(false);
   const { apartment: apartmentId, lease: leaseId } = useParams<{
     apartment: string;
     lease: string;
   }>();
-  const data = emptyData;
+  const data = useAppData();
   const apartment = data.apartments.find((item) => item.id === apartmentId);
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
@@ -42,8 +38,9 @@ export default function Page() {
   );
   if (!lease)
     return <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />;
+  const archivedLease = Boolean(lease.archivedAt || apartment.archivedAt);
   const periods = data.paymentPeriods
-    .filter((p) => p.leaseId === leaseId)
+    .filter((p) => p.leaseId === leaseId && Boolean(p.archivedAt || archivedLease) === showArchived)
     .sort((a, b) => b.startDate.localeCompare(a.startDate));
   const shares = splitRent(lease.totalRentCents, lease.tenantIds);
   return (
@@ -55,12 +52,13 @@ export default function Page() {
           description={<DateRange start={lease.startDate} end={lease.endDate} />}
         />
         <div className="flex gap-2">
-          <Link href={landlordRoutes.leaseEdit(apartmentId, leaseId)}>
+          {!archivedLease && <Link href={landlordRoutes.leaseEdit(apartmentId, leaseId)}>
             <Button variant="outline">Edit lease</Button>
-          </Link>
-          <Link href={landlordRoutes.newPeriod(apartmentId, leaseId)}>
+          </Link>}
+          {!archivedLease && <Link href={landlordRoutes.newPeriod(apartmentId, leaseId)}>
             <Button>Create payment period</Button>
-          </Link>
+          </Link>}
+          {!archivedLease && <ArchiveButton kind="lease" id={leaseId} destination={landlordRoutes.leases(apartmentId)} />}
         </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
@@ -71,7 +69,7 @@ export default function Page() {
           <CardContent>
             <dl className="grid grid-cols-2 gap-5">
               <DetailItem label="Status">
-                <Badge tone={lease.status}>{lease.status}</Badge>
+                <Badge tone={archivedLease ? "neutral" : lease.status}>{archivedLease ? "Archived" : lease.status}</Badge>
               </DetailItem>
               <DetailItem label="Total rent">
                 {formatCurrency(lease.totalRentCents)}
@@ -112,6 +110,7 @@ export default function Page() {
         <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Payment periods
         </h2>
+        <Button type="button" variant="outline" onClick={() => setShowArchived((value) => !value)}>{showArchived ? "Show active" : "Show archived"}</Button>
         {periods.length ? (
           <div className="space-y-4">
             {periods.map((period) => {
@@ -124,11 +123,9 @@ export default function Page() {
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                       <div>
                         <CardTitle>
-                          <DateRange
-                            start={period.startDate}
-                            end={period.endDate}
-                          />
+                          {period.name}
                         </CardTitle>
+                        <p className="text-sm text-zinc-500"><DateRange start={period.startDate} end={period.endDate} /></p>
                         <p className="text-sm text-zinc-500">
                           Due {formatDate(period.dueDate)}
                         </p>
@@ -165,6 +162,7 @@ export default function Page() {
                           </div>
                           <div className="flex items-center gap-2">
                             <PaymentBadge payment={payment} period={period} />
+                            {payment.status === "pending" && <ConfirmPaymentButton id={payment.id} />}
                           </div>
                         </div>
                       );
@@ -176,10 +174,10 @@ export default function Page() {
           </div>
         ) : (
           <EmptyState
-            title="No payment periods"
-            description="Create a payment period to generate tenant payment records."
-            actionHref={landlordRoutes.newPeriod(apartmentId, leaseId)}
-            actionLabel="Create payment period"
+            title={showArchived ? "No archived periods" : "No payment periods"}
+            description={showArchived ? "Archived periods will appear here." : "Create a payment period to generate tenant payment records."}
+            actionHref={showArchived || archivedLease ? undefined : landlordRoutes.newPeriod(apartmentId, leaseId)}
+            actionLabel={showArchived || archivedLease ? undefined : "Create payment period"}
           />
         )}
       </div>

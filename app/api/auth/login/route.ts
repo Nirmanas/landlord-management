@@ -1,5 +1,5 @@
 import { loginSchema } from "@/components/auth/schemas";
-import { login } from "@/lib/auth/auth";
+import { login, logout } from "@/lib/auth/auth";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -21,7 +21,16 @@ export async function POST(request: Request) {
     );
   }
 
-  await login(result.data.email, result.data.password);
+  try {
+    await login(result.data.email, result.data.password);
+  } catch {
+    return Response.json({ error: "Invalid email or password." }, { status: 401 });
+  }
 
+  return Response.json({ success: true }, { status: 200 });
+}
+
+export async function DELETE() {
+  await logout();
   return Response.json({ success: true }, { status: 200 });
 }

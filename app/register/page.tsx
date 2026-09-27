@@ -11,11 +11,13 @@ import { AuthField, PasswordField } from "@/components/auth/auth-fields";
 import { registerSchema } from "@/components/auth/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-controls";
+import { useState } from "react";
 
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function Page() {
   const router = useRouter();
+  const [serverError, setServerError] = useState("");
   const {
     register,
     handleSubmit,
@@ -32,6 +34,7 @@ export default function Page() {
   });
 
   async function onSubmit(data: RegisterValues) {
+    setServerError("");
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -45,15 +48,18 @@ export default function Page() {
       });
       if (response.ok) {
         router.push("/login");
+      } else {
+        const body = await response.json();
+        setServerError(body.error ?? "Could not create the account.");
       }
     } catch {
-      // Keep the form available for another attempt if the request fails.
+      setServerError("Could not connect. Please try again.");
     }
   }
 
   return (
     <AuthShell
-      title="Create your tenant account"
+      title="Create your account"
       description="Enter your details to get started with your rental workspace."
     >
       <form
@@ -122,6 +128,7 @@ export default function Page() {
           {isSubmitting ? "Creating account…" : "Create account"}
           {!isSubmitting && <ArrowRight className="size-4" aria-hidden="true" />}
         </Button>
+        {serverError && <p role="alert" className="text-sm text-rose-700">{serverError}</p>}
       </form>
 
       <p className="mt-6 text-center text-sm text-zinc-600">

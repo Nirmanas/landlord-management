@@ -13,9 +13,12 @@ import {
 } from "@/lib/apartment-schema";
 import { landlordRoutes } from "@/lib/routes";
 import type { Apartment } from "@/lib/types";
+import { saveApartment } from "@/app/actions";
+import { useState } from "react";
 
 export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
   const router = useRouter();
+  const [serverError, setServerError] = useState("");
   const {
     register,
     handleSubmit,
@@ -28,13 +31,12 @@ export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
     },
   });
 
-  function onSubmit() {
-    // Temporary navigation until apartment persistence is connected.
-    router.push(
-      apartment
-        ? landlordRoutes.apartment(apartment.id)
-        : landlordRoutes.apartments,
-    );
+  async function onSubmit(values: ApartmentFormValues) {
+    setServerError("");
+    const result = await saveApartment(values, apartment?.id);
+    if (!result.ok) return setServerError(result.error);
+    router.push(landlordRoutes.apartment(result.id!));
+    router.refresh();
   }
 
   return (
@@ -72,6 +74,8 @@ export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
           </Field>
         </CardContent>
       </Card>
+
+      {serverError && <p role="alert" className="text-sm text-rose-700">{serverError}</p>}
 
       <div className="flex justify-end gap-3">
         <Link

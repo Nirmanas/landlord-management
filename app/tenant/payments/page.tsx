@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppData } from "@/lib/types";
+import { useAppData } from "@/components/data-provider";
+import { ReportPaymentButton } from "@/components/action-buttons";
+
 
 import { CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,23 +15,15 @@ import {
 import { formatCurrency, formatDate } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 
-const emptyData: AppData = {
-  apartments: [],
-  tenants: [],
-  leases: [],
-  paymentPeriods: [],
-  tenantPayments: [],
-};
-
 export default function Page() {
-  const data = emptyData;
+  const data = useAppData();
   const tenant = data.tenants[0];
   const payments = data.tenantPayments.filter((p) => p.tenantId === tenant?.id);
   if (!tenant)
     return (
       <EmptyState
-        title="No tenant selected"
-        description="Select a tenant to view their payments."
+        title="Tenant profile unavailable"
+        description="Your account does not have a tenant profile."
       />
     );
   const sorted = [...payments].sort((a, b) => {
@@ -82,6 +76,7 @@ export default function Page() {
                       {formatCurrency(payment.amountCents)}
                     </p>
                     <PaymentBadge payment={payment} period={period} />
+                    {(payment.status === "unpaid" || payment.status === "failed") && <ReportPaymentButton id={payment.id} />}
                   </div>
                 </CardContent>
               </Card>
