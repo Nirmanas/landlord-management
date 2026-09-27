@@ -10,10 +10,12 @@ export const cryptoKey = await crypto.subtle.importKey(
   ["sign"],
 );
 
-export async function hashValue(value: string): Promise<Buffer<ArrayBuffer>> {
+export async function hashValue(
+  value: string,
+  salt?: string,
+): Promise<Buffer<ArrayBuffer>> {
   const encoder = new TextEncoder();
-  const salt = "svx";
-  const saltedData = encoder.encode(salt + value);
+  const saltedData = encoder.encode((salt ?? "") + value);
   const hashBuffer = await crypto.subtle.sign("HMAC", cryptoKey, saltedData);
   const hashArray = Buffer.from(new Uint8Array(hashBuffer));
   return hashArray;

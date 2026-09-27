@@ -11,7 +11,7 @@ const leaseSchema = z.object({
 
 export async function GET() {
   const user = await auth();
-  if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
+  if (!user) return Response.json({ error: "Sign in required." }, { status: 401, headers: { "WWW-Authenticate": "Bearer" } });
 
   try {
     let tenantId: number | null = null;
@@ -45,7 +45,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const user = await auth();
-  if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
+  if (!user) return Response.json({ error: "Sign in required." }, { status: 401, headers: { "WWW-Authenticate": "Bearer" } });
   if (user.role !== "LANDLORD") return Response.json({ error: "Only landlords can do that." }, { status: 403 });
 
   let body: unknown;

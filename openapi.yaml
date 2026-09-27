@@ -1,0 +1,657 @@
+openapi: 3.1.0
+info:
+  title: Landlord Management API
+  version: 0.1.0
+  description: |
+    HTTP API for apartments, leases, lease payment periods, and authentication.
+    Record IDs are positive decimal strings. All record responses use a `data`
+    envelope; record errors use an `error` envelope.
+
+    Authentication accepts the signed token either as `Authorization: Bearer
+    <token>` or in the HttpOnly `auth` cookie. Login sets the cookie and returns
+    the token in JSON for API clients. When an Authorization header is present,
+    it takes precedence; an invalid header does not fall back to the cookie.
+    See `bearerAuth`, `cookieAuth`, and `AuthTokenPayload` below.
+tags:
+  - name: Authentication
+  - name: Apartments
+  - name: Leases
+  - name: Payment periods
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+paths:
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      operationId: register
+      summary: Register an account
+      description: The first registered account becomes a landlord; subsequent accounts become tenants. Registration does not sign the user in.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      responses:
+        '201':
+          description: Account created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/AuthValidationError'
+        '409':
+          description: Email already registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      operationId: login
+      summary: Sign in
+      description: Sets an HttpOnly `auth` cookie and returns the same signed token in the JSON response for Bearer clients. Do not store the returned token in browser local storage.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Signed in.
+          headers:
+            Set-Cookie:
+              description: |
+                `auth=<token>; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax`.
+                `Secure` is also set in production. The token expires after 24 hours.
+              schema:
+                type: string
+            Cache-Control:
+              description: Prevents caching of the token response.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/AuthValidationError'
+        '401':
+          description: Invalid email or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Authentication]
+      operationId: logout
+      summary: Sign out
+      description: Clears the `auth` cookie. This operation also succeeds when no session exists. A Bearer token already returned to a client is not revoked and remains valid until expiration.
+      security: []
+      responses:
+        '200':
+          description: Signed out.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/apartments:
+    get:
+      tags: [Apartments]
+      operationId: listApartments
+      summary: List visible apartments
+      description: Landlords see their apartments. Tenants see apartments linked through a lease assignment or payment history. Archived apartments remain in the list.
+      responses:
+        '200':
+          description: Apartments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartmentListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Apartments]
+      operationId: createApartment
+      summary: Create an apartment
+      description: Landlord only. The signed-in landlord becomes the owner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApartmentInput'
+      responses:
+        '201':
+          description: Apartment created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartmentResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+  /api/apartments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RecordId'
+    get:
+      tags: [Apartments]
+      operationId: getApartment
+      summary: Read an apartment
+      description: Uses the same visibility rules as the apartment list. Archived apartments remain readable.
+      responses:
+        '200':
+          description: Apartment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartmentResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    put:
+      tags: [Apartments]
+      operationId: updateApartment
+      summary: Update an apartment
+      description: Landlord owner only. Archived apartments cannot be updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApartmentInput'
+      responses:
+        '200':
+          description: Updated apartment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartmentResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Apartments]
+      operationId: archiveApartment
+      summary: Archive an apartment
+      description: Landlord owner only. Sets `archivedAt`; deleting an already archived apartment returns it without changing the timestamp.
+      responses:
+        '200':
+          description: Archived apartment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartmentResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/leases:
+    get:
+      tags: [Leases]
+      operationId: listLeases
+      summary: List visible leases
+      description: Landlords see leases for their apartments. Tenants see leases assigned to them or linked through their payment history. Archived leases remain in the list.
+      responses:
+        '200':
+          description: Leases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaseListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Leases]
+      operationId: createLease
+      summary: Create a lease
+      description: Landlord owner only. Tenants must be registered and available. Lease dates cannot overlap another lease for the apartment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaseInput'
+      responses:
+        '201':
+          description: Lease created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaseResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/ServerError' }
+  /api/leases/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RecordId'
+    get:
+      tags: [Leases]
+      operationId: getLease
+      summary: Read a lease
+      description: Uses the same visibility rules as the lease list. Archived leases remain readable.
+      responses:
+        '200':
+          description: Lease.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaseResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    put:
+      tags: [Leases]
+      operationId: updateLease
+      summary: Update a lease
+      description: Landlord owner only. The request includes `apartmentId`, but the lease cannot be moved to another apartment. New dates must contain all existing periods and cannot overlap another lease. Existing assigned tenants may remain even if archived.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaseInput'
+      responses:
+        '200':
+          description: Updated lease.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaseResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Leases]
+      operationId: archiveLease
+      summary: Archive a lease
+      description: Landlord owner only. Sets `archivedAt`; deleting an already archived lease returns it without changing the timestamp.
+      responses:
+        '200':
+          description: Archived lease.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaseResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/periods:
+    get:
+      tags: [Payment periods]
+      operationId: listPeriods
+      summary: List visible lease payment periods
+      description: Landlords see periods for their apartments' leases. Tenants see periods for their assigned leases or linked through their payment history. Archived periods remain in the list.
+      responses:
+        '200':
+          description: Payment periods.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Payment periods]
+      operationId: createPeriod
+      summary: Create a lease payment period
+      description: Landlord owner only. Dates must be within the active lease and cannot overlap another period. Creates one payment per assigned tenant, splitting rent as evenly as possible; `dueDate` equals `endDate`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodInput'
+      responses:
+        '201':
+          description: Period and tenant payments created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/ServerError' }
+  /api/periods/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RecordId'
+    get:
+      tags: [Payment periods]
+      operationId: getPeriod
+      summary: Read a lease payment period
+      description: Uses the same visibility rules as the period list. Archived periods remain readable.
+      responses:
+        '200':
+          description: Payment period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    put:
+      tags: [Payment periods]
+      operationId: updatePeriodName
+      summary: Rename a lease payment period
+      description: Landlord owner only. Only `name` can be changed; dates, due date, and tenant payment amounts stay fixed. The period and its parent lease and apartment must be active.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodNameInput'
+      responses:
+        '200':
+          description: Updated payment period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Payment periods]
+      operationId: archivePeriod
+      summary: Archive a lease payment period
+      description: Landlord owner only. Sets `archivedAt`; deleting an already archived period returns it without changing the timestamp.
+      responses:
+        '200':
+          description: Archived payment period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT-shaped
+      description: |
+        Send the token returned by `POST /api/auth/login` as
+        `Authorization: Bearer <access_token>`. The header takes precedence
+        over the cookie when both are present. The token currently has mixed
+        Base64/Base64url encoding as described under `cookieAuth`.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth
+      description: |
+        HttpOnly cookie set by `POST /api/auth/login`; send it as `Cookie: auth=<token>`.
+        The current token has a regular Base64-encoded `{"alg":"HS256","typ":"JWT"}`
+        header and a regular Base64-encoded `AuthTokenPayload`. The HMAC-SHA256
+        signature is encoded as unpadded Base64url. The signature covers the
+        encoded header, a period, and the encoded payload, using server-side
+        `AUTH_KEY`. Because the header and payload still use regular Base64,
+        this is not yet standard JWS compact serialization; generic JWT
+        libraries may not verify it. The server also checks the current
+        database user and role on every authenticated request. The same token
+        may also be sent in the Authorization Bearer header.
+  parameters:
+    RecordId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[1-9][0-9]*$'
+      description: Positive decimal integer within JavaScript's safe integer range.
+  responses:
+    BadRequest:
+      description: Malformed JSON, invalid ID, or invalid input.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    AuthValidationError:
+      description: Malformed JSON or invalid authentication input. Field errors are included for schema validation failures.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/AuthErrorResponse' }
+    Unauthorized:
+      description: Bearer token or authentication cookie is missing or invalid.
+      headers:
+        WWW-Authenticate:
+          description: Bearer authentication challenge.
+          schema:
+            type: string
+            const: Bearer
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: Role is not allowed, or the tenant profile is missing.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: Record does not exist or is outside the caller's scope.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Conflict:
+      description: Record is archived or conflicts with existing dates or data.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ServerError:
+      description: Unexpected record request failure.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    AuthErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            fields:
+              type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean, const: true }
+    LoginResponse:
+      type: object
+      required: [success, access_token, token_type, expires_in]
+      properties:
+        success: { type: boolean, const: true }
+        access_token: { type: string, minLength: 1, description: Signed token to use in the Authorization Bearer header. }
+        token_type: { type: string, const: Bearer }
+        expires_in: { type: integer, const: 86400, description: Token lifetime in seconds. }
+    AuthTokenPayload:
+      type: object
+      description: Claims stored in the signed `auth` cookie token. This payload is not returned by any API response.
+      additionalProperties: false
+      required: [user, iat, exp]
+      properties:
+        user:
+          type: object
+          additionalProperties: false
+          required: [id, email, role]
+          properties:
+            id: { type: integer, description: Database user ID. }
+            email: { type: string, format: email }
+            role: { type: string, enum: [LANDLORD, TENANT] }
+        iat: { type: integer, description: Issued-at time as Unix seconds. }
+        exp: { type: integer, description: Expiration time as Unix seconds; normally iat + 86400. }
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, minLength: 1 }
+        password: { type: string, minLength: 1 }
+    RegisterInput:
+      type: object
+      required: [name, phoneNumber, email, password]
+      properties:
+        name: { type: string, minLength: 2 }
+        phoneNumber: { type: string, minLength: 1 }
+        email: { type: string, format: email, minLength: 1 }
+        password: { type: string, minLength: 8 }
+    RecordId:
+      type: string
+      pattern: '^[1-9][0-9]*$'
+      description: Positive decimal integer within JavaScript's safe integer range.
+    ApartmentInput:
+      type: object
+      additionalProperties: false
+      required: [name, address]
+      properties:
+        name: { type: string, minLength: 1, description: Trimmed; whitespace-only values are rejected. }
+        address: { type: string, minLength: 1, description: Trimmed; whitespace-only values are rejected. }
+    Apartment:
+      type: object
+      required: [id, name, address, archivedAt]
+      properties:
+        id: { $ref: '#/components/schemas/RecordId' }
+        name: { type: string }
+        address: { type: string }
+        archivedAt: { type: [string, 'null'], format: date-time }
+    LeaseInput:
+      type: object
+      additionalProperties: false
+      required: [apartmentId, startDate, endDate, rentalPrice, tenantIds]
+      properties:
+        apartmentId: { $ref: '#/components/schemas/RecordId' }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        rentalPrice:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: Total rent in cents.
+        tenantIds:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/RecordId' }
+    Lease:
+      type: object
+      required: [id, apartmentId, startDate, endDate, status, totalRentCents, tenantIds, archivedAt]
+      properties:
+        id: { $ref: '#/components/schemas/RecordId' }
+        apartmentId: { $ref: '#/components/schemas/RecordId' }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        status: { type: string, enum: [upcoming, active, ended], description: Computed from the lease dates. }
+        totalRentCents: { type: integer, description: Total rent in cents. }
+        tenantIds:
+          type: array
+          items: { $ref: '#/components/schemas/RecordId' }
+        archivedAt: { type: [string, 'null'], format: date-time }
+    PeriodInput:
+      type: object
+      additionalProperties: false
+      required: [leaseId, name, startDate, endDate]
+      properties:
+        leaseId: { $ref: '#/components/schemas/RecordId' }
+        name: { type: string, minLength: 1, description: Trimmed; whitespace-only values are rejected. }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+    PeriodNameInput:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, description: Trimmed; whitespace-only values are rejected. }
+    PaymentPeriod:
+      type: object
+      required: [id, leaseId, name, startDate, endDate, dueDate, archivedAt]
+      properties:
+        id: { $ref: '#/components/schemas/RecordId' }
+        leaseId: { $ref: '#/components/schemas/RecordId' }
+        name: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        dueDate: { type: string, format: date }
+        archivedAt: { type: [string, 'null'], format: date-time }
+    ApartmentResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/Apartment' }
+    ApartmentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Apartment' }
+    LeaseResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/Lease' }
+    LeaseListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Lease' }
+    PeriodResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/PaymentPeriod' }
+    PeriodListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/PaymentPeriod' }

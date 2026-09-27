@@ -12,7 +12,7 @@ const leaseSchema = z.object({
 
 export async function GET(_request: Request, { params }: Context) {
   const user = await auth();
-  if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
+  if (!user) return Response.json({ error: "Sign in required." }, { status: 401, headers: { "WWW-Authenticate": "Bearer" } });
   const rawId = (await params).id;
   const id = Number(rawId);
   if (!/^[1-9]\d*$/.test(rawId) || !Number.isSafeInteger(id)) return Response.json({ error: "Invalid record ID." }, { status: 400 });
@@ -46,7 +46,7 @@ export async function GET(_request: Request, { params }: Context) {
 
 export async function PUT(request: Request, { params }: Context) {
   const user = await auth();
-  if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
+  if (!user) return Response.json({ error: "Sign in required." }, { status: 401, headers: { "WWW-Authenticate": "Bearer" } });
   if (user.role !== "LANDLORD") return Response.json({ error: "Only landlords can do that." }, { status: 403 });
   const rawId = (await params).id;
   const id = Number(rawId);
@@ -106,7 +106,7 @@ export async function PUT(request: Request, { params }: Context) {
 
 export async function DELETE(_request: Request, { params }: Context) {
   const user = await auth();
-  if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
+  if (!user) return Response.json({ error: "Sign in required." }, { status: 401, headers: { "WWW-Authenticate": "Bearer" } });
   if (user.role !== "LANDLORD") return Response.json({ error: "Only landlords can do that." }, { status: 403 });
   const rawId = (await params).id;
   const id = Number(rawId);

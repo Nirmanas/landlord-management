@@ -15,7 +15,7 @@ type TokenPayload = {
 const header = btoa(
   JSON.stringify({
     alg: "HS256",
-    type: "JWT",
+    typ: "JWT",
   }),
 );
 
@@ -38,17 +38,34 @@ export async function generateToken(
 
   const signature = await hashValue(`${header}.${payloadString}`);
 
-  return `${header}.${payloadString}.${Buffer.from(signature).toString("base64")}`;
+  return `${header}.${payloadString}.${Buffer.from(signature).toString("base64url")}`;
 }
 
-export async function verifyToken(token: string): Promise<TokenPayload["user"] | null> {
+export async function verifyToken(
+  token: string,
+): Promise<TokenPayload["user"] | null> {
   try {
     const [tokenHeader, payload, signature, extra] = token.split(".");
-    if (!tokenHeader || !payload || !signature || extra || tokenHeader !== header) return null;
-    if (!(await verifyHash(`${tokenHeader}.${payload}`, signature))) return null;
-    const decoded: TokenPayload = JSON.parse(Buffer.from(payload, "base64").toString("utf-8"));
-    if (!Number.isInteger(decoded.exp) || decoded.exp <= Date.now() / 1000) return null;
-    if (!Number.isInteger(decoded.user?.id) || !["LANDLORD", "TENANT"].includes(decoded.user.role)) return null;
+    if (
+      !tokenHeader ||
+      !payload ||
+      !signature ||
+      extra ||
+      tokenHeader !== header
+    )
+      return null;
+    if (!(await verifyHash(`${tokenHeader}.${payload}`, signature)))
+      return null;
+    const decoded: TokenPayload = JSON.parse(
+      Buffer.from(payload, "base64").toString("utf-8"),
+    );
+    if (!Number.isInteger(decoded.exp) || decoded.exp <= Date.now() / 1000)
+      return null;
+    if (
+      !Number.isInteger(decoded.user?.id) ||
+      !["LANDLORD", "TENANT"].includes(decoded.user.role)
+    )
+      return null;
     return decoded.user;
   } catch {
     return null;

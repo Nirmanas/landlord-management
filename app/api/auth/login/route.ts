@@ -21,13 +21,17 @@ export async function POST(request: Request) {
     );
   }
 
+  let token: string;
   try {
-    await login(result.data.email, result.data.password);
+    token = await login(result.data.email, result.data.password);
   } catch {
     return Response.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
-  return Response.json({ success: true }, { status: 200 });
+  return Response.json(
+    { success: true, access_token: token, token_type: "Bearer", expires_in: 60 * 60 * 24 },
+    { status: 200, headers: { "Cache-Control": "no-store", Pragma: "no-cache" } },
+  );
 }
 
 export async function DELETE() {

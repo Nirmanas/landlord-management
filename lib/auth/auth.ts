@@ -1,25 +1,33 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { UserRole } from "../generated/prisma/browser";
 import { prisma } from "../prisma";
 import { generateToken, verifyToken } from "./jwt";
 import { hashValue, toHexString } from "./crypto";
 
 // TODO: add refresh later
-export default async function auth(): Promise<{ id: number; email: string; role: UserRole } | null> {
-  const authCookie = (await cookies()).get("auth");
-  if (!authCookie) {
-    return null;
-  }
-  const tokenUser = await verifyToken(authCookie.value);
+export default async function auth(): Promise<{
+  id: number;
+  email: string;
+  role: UserRole;
+} | null> {
+  const authorization = (await headers()).get("authorization");
+  const token = authorization === null
+    ? (await cookies()).get("auth")?.value
+    : /^Bearer[ \t]+(\S+)$/i.exec(authorization)?.[1];
+  if (!token) return null;
+  const tokenUser = await verifyToken(token);
   if (!tokenUser) return null;
-  const user = await prisma.user.findUnique({ where: { id: tokenUser.id }, select: { id: true, email: true, role: { select: { role: true } } } });
+  const user = await prisma.user.findUnique({
+    where: { id: tokenUser.id },
+    select: { id: true, email: true, role: { select: { role: true } } },
+  });
   if (!user?.role || user.role.role !== tokenUser.role) return null;
   return { id: user.id, email: user.email, role: user.role.role };
 }
 
-export async function login(email: string, password: string): Promise<void> {
+export async function login(email: string, password: string): Promise<string> {
   const hashedPassword = await getHexValue(password);
 
   const user = await prisma.user.findFirst({
@@ -39,13 +47,15 @@ export async function login(email: string, password: string): Promise<void> {
     throw new Error("Invalid email or password.");
   }
 
-  (await cookies()).set("auth", await generateToken(user), {
+  const token = await generateToken(user);
+  (await cookies()).set("auth", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24,
     path: "/",
     sameSite: "lax",
   });
+  return token;
 }
 
 export async function logout(): Promise<void> {
@@ -86,7 +96,7 @@ export async function register(
 }
 
 async function getHexValue(value: string): Promise<string> {
-  const hashBuffer = await hashValue(value);
+  const hashBuffer = await hashValue(value, "svx");
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return toHexString(hashArray);
 }
