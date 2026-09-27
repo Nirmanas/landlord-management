@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         error: "Invalid registration data",
         fields: result.error.flatten().fieldErrors,
       },
-      { status: 400 },
+      { status: 422 },
     );
   }
   try {

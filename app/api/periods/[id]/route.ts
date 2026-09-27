@@ -17,7 +17,7 @@ export async function GET(_request: Request, { params }: Context) {
     let tenantId: number | null = null;
     if (user.role === "TENANT") {
       const tenant = await prisma.tenant.findUnique({ where: { userId: user.id }, select: { id: true } });
-      if (!tenant) return Response.json({ error: "Tenant profile not found." }, { status: 403 });
+      if (!tenant) return Response.json({ error: "Tenant profile not found." }, { status: 404 });
       tenantId = tenant.id;
     }
     const period = await prisma.period.findFirst({ where: {
@@ -49,7 +49,7 @@ export async function PUT(request: Request, { params }: Context) {
   try { body = await request.json(); }
   catch { return Response.json({ error: "Invalid JSON body." }, { status: 400 }); }
   const parsed = nameSchema.safeParse(body);
-  if (!parsed.success) return Response.json({ error: "Check the entered information." }, { status: 400 });
+  if (!parsed.success) return Response.json({ error: "Check the entered information." }, { status: 422 });
 
   try {
     const existing = await prisma.period.findFirst({ where: { id, lease: { property: { ownerId: user.id } } }, include: { lease: { include: { property: true } } } });

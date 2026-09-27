@@ -16,7 +16,7 @@ export async function GET() {
     let tenantId: number | null = null;
     if (user.role === "TENANT") {
       const tenant = await prisma.tenant.findUnique({ where: { userId: user.id }, select: { id: true } });
-      if (!tenant) return Response.json({ error: "Tenant profile not found." }, { status: 403 });
+      if (!tenant) return Response.json({ error: "Tenant profile not found." }, { status: 404 });
       tenantId = tenant.id;
     }
     const periods = await prisma.period.findMany({
@@ -45,12 +45,12 @@ export async function POST(request: Request) {
   try { body = await request.json(); }
   catch { return Response.json({ error: "Invalid JSON body." }, { status: 400 }); }
   const parsed = periodSchema.safeParse(body);
-  if (!parsed.success) return Response.json({ error: "Check the entered information." }, { status: 400 });
+  if (!parsed.success) return Response.json({ error: "Check the entered information." }, { status: 422 });
   const values = parsed.data;
   const leaseId = Number(values.leaseId);
-  if (!/^[1-9]\d*$/.test(values.leaseId) || !Number.isSafeInteger(leaseId)) return Response.json({ error: "Invalid record ID." }, { status: 400 });
+  if (!/^[1-9]\d*$/.test(values.leaseId) || !Number.isSafeInteger(leaseId)) return Response.json({ error: "Invalid record ID." }, { status: 422 });
   const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)) && new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value;
-  if (!validDate(values.startDate) || !validDate(values.endDate)) return Response.json({ error: "Enter a valid date." }, { status: 400 });
+  if (!validDate(values.startDate) || !validDate(values.endDate)) return Response.json({ error: "Enter a valid date." }, { status: 422 });
   const startDate = new Date(`${values.startDate}T00:00:00.000Z`);
   const endDate = new Date(`${values.endDate}T00:00:00.000Z`);
 
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const lease = await prisma.lease.findFirst({ where: { id: leaseId, property: { ownerId: user.id } }, include: { tenants: true, property: true } });
     if (!lease) return Response.json({ error: "Lease not found." }, { status: 404 });
     if (lease.archivedAt || lease.property.archivedAt) return Response.json({ error: "Lease is unavailable." }, { status: 409 });
-    if (startDate > endDate || startDate < lease.startDate || endDate > lease.endDate) return Response.json({ error: "Period dates must fall within the lease." }, { status: 400 });
+    if (startDate > endDate || startDate < lease.startDate || endDate > lease.endDate) return Response.json({ error: "Period dates must fall within the lease." }, { status: 422 });
     const tenantIds = lease.tenants.map((tenant) => tenant.id).sort((a, b) => a - b);
     if (!tenantIds.length) return Response.json({ error: "Assign a tenant before creating a period." }, { status: 409 });
     const base = lease.rentalPrice / BigInt(tenantIds.length);

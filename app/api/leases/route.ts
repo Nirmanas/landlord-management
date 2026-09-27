@@ -17,7 +17,7 @@ export async function GET() {
     let tenantId: number | null = null;
     if (user.role === "TENANT") {
       const tenant = await prisma.tenant.findUnique({ where: { userId: user.id }, select: { id: true } });
-      if (!tenant) return Response.json({ error: "Tenant profile not found." }, { status: 403 });
+      if (!tenant) return Response.json({ error: "Tenant profile not found." }, { status: 404 });
       tenantId = tenant.id;
     }
     const leases = await prisma.lease.findMany({
@@ -52,24 +52,24 @@ export async function POST(request: Request) {
   try { body = await request.json(); }
   catch { return Response.json({ error: "Invalid JSON body." }, { status: 400 }); }
   const parsed = leaseSchema.safeParse(body);
-  if (!parsed.success) return Response.json({ error: "Check the entered information." }, { status: 400 });
+  if (!parsed.success) return Response.json({ error: "Check the entered information." }, { status: 422 });
   const values = parsed.data;
   const propertyId = Number(values.apartmentId);
-  if (!/^[1-9]\d*$/.test(values.apartmentId) || !Number.isSafeInteger(propertyId)) return Response.json({ error: "Invalid record ID." }, { status: 400 });
+  if (!/^[1-9]\d*$/.test(values.apartmentId) || !Number.isSafeInteger(propertyId)) return Response.json({ error: "Invalid record ID." }, { status: 422 });
   const ids = [...new Set(values.tenantIds.map(Number))];
-  if (values.tenantIds.some((value) => !/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value)))) return Response.json({ error: "Invalid record ID." }, { status: 400 });
+  if (values.tenantIds.some((value) => !/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value)))) return Response.json({ error: "Invalid record ID." }, { status: 422 });
   const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)) && new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value;
-  if (!validDate(values.startDate) || !validDate(values.endDate)) return Response.json({ error: "Enter a valid date." }, { status: 400 });
+  if (!validDate(values.startDate) || !validDate(values.endDate)) return Response.json({ error: "Enter a valid date." }, { status: 422 });
   const startDate = new Date(`${values.startDate}T00:00:00.000Z`);
   const endDate = new Date(`${values.endDate}T00:00:00.000Z`);
-  if (startDate > endDate) return Response.json({ error: "End date must follow start date." }, { status: 400 });
+  if (startDate > endDate) return Response.json({ error: "End date must follow start date." }, { status: 422 });
 
   try {
     const property = await prisma.property.findFirst({ where: { id: propertyId, ownerId: user.id } });
     if (!property) return Response.json({ error: "Apartment not found." }, { status: 404 });
     if (property.archivedAt) return Response.json({ error: "Apartment is unavailable." }, { status: 409 });
     const registered = await prisma.tenant.count({ where: { id: { in: ids }, user: { role: { role: "TENANT" } }, archivedAt: null } });
-    if (registered !== ids.length) return Response.json({ error: "Select only registered, available tenants." }, { status: 400 });
+    if (registered !== ids.length) return Response.json({ error: "Select only registered, available tenants." }, { status: 422 });
     const lease = await prisma.$transaction(async (tx) => {
       const conflict = await tx.lease.findFirst({ where: { propertyId, startDate: { lte: endDate }, endDate: { gte: startDate } } });
       if (conflict) throw new Error("LEASE_CONFLICT");
