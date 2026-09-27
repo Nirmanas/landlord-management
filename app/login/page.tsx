@@ -83,7 +83,11 @@ export default function Page() {
         <Button type="submit" className="w-full">
           Sign in <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
-        {serverError && <p role="alert" className="text-sm text-rose-700">{serverError}</p>}
+        {serverError && (
+          <p role="alert" className="text-sm text-rose-700">
+            {serverError}
+          </p>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-zinc-600">
