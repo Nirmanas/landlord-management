@@ -1,13 +1,15 @@
+import auth from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
   // TODO: Implement auth
-  const auth = false;
+  const user = await auth();
   const landlord = false;
   if (!auth) {
     redirect("login");
   }
-  if (auth && landlord) {
+  console.log(user);
+  if (user && landlord) {
     redirect("landlord");
   } else {
     redirect("tenant");

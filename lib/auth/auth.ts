@@ -5,7 +5,7 @@ import { User, UserRole } from "../generated/prisma/browser";
 import { redirect } from "next/navigation";
 import { prisma } from "../prisma";
 import { generateToken, verifyToken } from "./jwt";
-import { hashString, toHexString } from "./crypto";
+import { hashValue, toHexString } from "./crypto";
 
 // TODO: add refresh later
 export default async function auth(): Promise<Omit<User, "password"> | null> {
@@ -17,7 +17,8 @@ export default async function auth(): Promise<Omit<User, "password"> | null> {
 }
 
 export async function login(email: string, password: string): Promise<void> {
-  const hashedPassword = toHexString(await hashString(password));
+  const hashedPassword = await getHexValue(password);
+
   const user = await prisma.user.findFirst({
     where: {
       email: email,
@@ -26,8 +27,9 @@ export async function login(email: string, password: string): Promise<void> {
   });
 
   if (!user) {
-    throw new Error("Invalid email or password");
+    throw new Error("Invalid email or password.");
   }
+
   (await cookies()).set("auth", await generateToken(user), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -35,7 +37,6 @@ export async function login(email: string, password: string): Promise<void> {
     path: "/",
     sameSite: "lax",
   });
-  redirect("/");
 }
 
 export async function logout(): Promise<void> {
@@ -49,16 +50,16 @@ export async function register(
   name: string,
   phone: string,
 ): Promise<void> {
+  // Decide the initial account role before creating the user.
+  const role: UserRole =
+    (await prisma.user.count()) === 0 ? "LANDLORD" : "TENANT";
   const user = await prisma.user.create({
     data: {
       email: email,
-      password: toHexString(await hashString(password)),
+      password: await getHexValue(password),
     },
   });
 
-  let role: UserRole = "TENANT";
-  // first user to be created will be admin
-  if ((await prisma.user.count()) === 0) role = "LANDLORD";
   await prisma.role.create({
     data: {
       userId: user.id,
@@ -74,6 +75,10 @@ export async function register(
         userId: user.id,
       },
     });
+}
 
-  await login(email, password);
+async function getHexValue(value: string): Promise<string> {
+  const hashBuffer = await hashValue(value);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return toHexString(hashArray);
 }

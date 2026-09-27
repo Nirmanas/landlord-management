@@ -1,7 +1,7 @@
 "use server";
 import { User } from "../generated/prisma/browser";
 import { prisma } from "../prisma";
-import { hashString, verifyHash } from "./crypto";
+import { hashValue, verifyHash } from "./crypto";
 
 type TokenPayload = {
   user: {
@@ -13,6 +13,8 @@ type TokenPayload = {
     name: string;
     userId: number;
   };
+  iat: number;
+  exp: number;
 };
 
 const header = btoa(
@@ -22,8 +24,11 @@ const header = btoa(
   }),
 );
 
-export async function generateToken(user: User): Promise<string> {
-  const tenant = prisma.tenant.findFirst({
+export async function generateToken(
+  user: User,
+  duration: number = 60 * 60 * 24,
+): Promise<string> {
+  const tenant = await prisma.tenant.findFirst({
     where: {
       userId: user.id,
     },
@@ -33,18 +38,20 @@ export async function generateToken(user: User): Promise<string> {
     throw new Error("Tenant not found for user");
   }
 
-  const payload = btoa(
-    JSON.stringify({
-      user: { id: user.id, email: user.email },
-      tenant: {
-        ...tenant,
-      },
-    }),
-  );
+  const payload: TokenPayload = {
+    user: { id: user.id, email: user.email },
+    tenant: {
+      ...tenant,
+    },
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + duration,
+  };
 
-  const signature = await hashString(`${header}.${payload}`);
+  const payloadString = btoa(JSON.stringify(payload));
 
-  return `${header}.${payload}.${Buffer.from(signature).toString("base64")}`;
+  const signature = await hashValue(`${header}.${payloadString}`);
+
+  return `${header}.${payloadString}.${Buffer.from(signature).toString("base64")}`;
 }
 
 export async function verifyToken(

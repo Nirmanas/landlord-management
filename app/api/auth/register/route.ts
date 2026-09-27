@@ -1,4 +1,5 @@
 import { registerRequestSchema } from "@/components/auth/schemas";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { register } from "@/lib/auth/auth";
 
 export async function POST(request: Request) {
@@ -11,6 +12,7 @@ export async function POST(request: Request) {
   }
 
   const result = registerRequestSchema.safeParse(body);
+
   if (!result.success) {
     return Response.json(
       {
@@ -20,10 +22,19 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  register(
-    result.data.email,
-    result.data.password,
-    result.data.name,
-    result.data.phoneNumber,
-  );
+  try {
+    await register(
+      result.data.email,
+      result.data.password,
+      result.data.name,
+      result.data.phoneNumber,
+    );
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return Response.json({ error: "Email already registered" }, { status: 409 });
+    }
+    throw error;
+  }
+
+  return Response.json({ success: true }, { status: 201 });
 }

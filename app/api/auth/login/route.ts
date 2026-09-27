@@ -21,5 +21,7 @@ export async function POST(request: Request) {
     );
   }
 
-  login(result.data.email, result.data.password);
+  await login(result.data.email, result.data.password);
+
+  return Response.json({ success: true }, { status: 200 });
 }

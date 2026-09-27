@@ -10,6 +10,7 @@ import { AuthField, PasswordField } from "@/components/auth/auth-fields";
 import { loginSchema } from "@/components/auth/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-controls";
+import { redirect } from "next/navigation";
 
 type LoginValues = z.infer<typeof loginSchema>;
 
@@ -23,17 +24,36 @@ export default function Page() {
     defaultValues: { email: "", password: "" },
   });
 
+  const onSubmit = async (data: LoginValues) => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Login failed:", errorData);
+      } else {
+        redirect("/");
+      }
+    } catch (e) {}
+  };
+
   return (
     <AuthShell
       title="Welcome back"
       description="Enter your details to access your rental workspace."
     >
-      <form
-        onSubmit={handleSubmit(() => {})}
-        noValidate
-        className="space-y-5"
-      >
-        <AuthField id="email" label="Email address" error={errors.email?.message}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        <AuthField
+          id="email"
+          label="Email address"
+          error={errors.email?.message}
+        >
           <Input
             id="email"
             {...register("email")}
