@@ -34,7 +34,9 @@ export async function generateToken(
     exp: Math.floor(Date.now() / 1000) + duration,
   };
 
-  const payloadString = btoa(JSON.stringify(payload));
+  const payloadString = Buffer.from(JSON.stringify(payload)).toString(
+    "base64url",
+  );
 
   const signature = await hashValue(`${header}.${payloadString}`);
 
@@ -57,7 +59,7 @@ export async function verifyToken(
     if (!(await verifyHash(`${tokenHeader}.${payload}`, signature)))
       return null;
     const decoded: TokenPayload = JSON.parse(
-      Buffer.from(payload, "base64").toString("utf-8"),
+      Buffer.from(payload, "base64url").toString("utf-8"),
     );
     if (!Number.isInteger(decoded.exp) || decoded.exp <= Date.now() / 1000)
       return null;

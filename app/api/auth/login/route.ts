@@ -25,12 +25,23 @@ export async function POST(request: Request) {
   try {
     token = await login(result.data.email, result.data.password);
   } catch {
-    return Response.json({ error: "Invalid email or password." }, { status: 401 });
+    return Response.json(
+      { error: "Invalid email or password." },
+      { status: 401 },
+    );
   }
 
   return Response.json(
-    { success: true, access_token: token, token_type: "Bearer", expires_in: 60 * 60 * 24 },
-    { status: 200, headers: { "Cache-Control": "no-store", Pragma: "no-cache" } },
+    {
+      success: true,
+      access_token: token,
+      token_type: "Bearer",
+      expires_in: 60 * 15,
+    },
+    {
+      status: 200,
+      headers: { "Cache-Control": "no-store", Pragma: "no-cache" },
+    },
   );
 }
 

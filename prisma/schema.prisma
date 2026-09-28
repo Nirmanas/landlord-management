@@ -14,6 +14,7 @@ model User {
   tenant Tenant?
   role Role? 
   properties Property[] @relation("OwnedProperties")
+  sessions Session[]
 }
 
 enum UserRole {
@@ -94,4 +95,19 @@ model Payment {
   status PaymentStatus @default(PENDING)
 
   @@unique([periodId, tenantId])
+}
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  familyId  String
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+  revokedAt DateTime?
+
+  @@index([userId])
+  @@index([familyId])
 }

@@ -21,15 +21,11 @@ export async function hashValue(
   return hashArray;
 }
 
-export function toHexString(hashArray: number[]): string {
-  return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 export async function verifyHash(
   value: string,
   compHash: string,
 ): Promise<boolean> {
   const newHash = await hashValue(value);
-  const oldHash = Buffer.from(compHash, "base64");
+  const oldHash = Buffer.from(compHash, "base64url");
   return timingSafeEqual(newHash, oldHash);
 }
