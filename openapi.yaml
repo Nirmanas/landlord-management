@@ -7,11 +7,14 @@ info:
     Record IDs are positive decimal strings. All record responses use a `data`
     envelope; record errors use an `error` envelope.
 
-    Authentication accepts the signed token either as `Authorization: Bearer
-    <token>` or in the HttpOnly `auth` cookie. Login sets the cookie and returns
-    the token in JSON for API clients. When an Authorization header is present,
-    it takes precedence; an invalid header does not fall back to the cookie.
-    See `bearerAuth`, `cookieAuth`, and `AuthTokenPayload` below.
+    Authentication accepts the 15-minute signed access token either as
+    `Authorization: Bearer <token>` or in the HttpOnly `auth` cookie. Login
+    sets that cookie and a seven-day HttpOnly `refresh` cookie, and returns
+    the access token in JSON for API clients. `POST /api/auth/refresh` uses
+    the refresh cookie to rotate the refresh token and issue a new access
+    token. When an Authorization header is present on protected record
+    requests, it takes precedence; an invalid header does not fall back to
+    the `auth` cookie. See the security schemes and `AuthTokenPayload` below.
 tags:
   - name: Authentication
   - name: Apartments
@@ -56,7 +59,7 @@ paths:
       tags: [Authentication]
       operationId: login
       summary: Sign in
-      description: Sets an HttpOnly `auth` cookie and returns the same signed token in the JSON response for Bearer clients. Do not store the returned token in browser local storage.
+      description: Sets HttpOnly `auth` and `refresh` cookies and returns the access token in JSON for Bearer clients. The refresh token is only sent in its cookie. Do not store the returned access token in browser local storage.
       security: []
       requestBody:
         required: true
@@ -70,8 +73,11 @@ paths:
           headers:
             Set-Cookie:
               description: |
-                `auth=<token>; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax`.
-                `Secure` is also set in production. The token expires after 24 hours.
+                Two cookies are set: `auth=<access_token>; Max-Age=900;
+                Path=/; HttpOnly; SameSite=Lax` and `refresh=<refresh_token>;
+                Expires=<date>; Path=/; HttpOnly; SameSite=Lax`. `Secure` is
+                also set in production. The refresh token expires after seven
+                days.
               schema:
                 type: string
             Cache-Control:
@@ -82,7 +88,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: '#/components/schemas/AccessTokenResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '422':
@@ -97,15 +103,68 @@ paths:
       tags: [Authentication]
       operationId: logout
       summary: Sign out
-      description: Clears the `auth` cookie. This operation also succeeds when no session exists. A Bearer token already returned to a client is not revoked and remains valid until expiration.
+      description: Revokes the refresh session family when a `refresh` cookie is present, then clears the `auth` and `refresh` cookies. This operation also succeeds when no session exists. Already issued access tokens are not revoked and remain valid until expiration.
       security: []
       responses:
         '200':
           description: Signed out.
+          headers:
+            Set-Cookie:
+              description: Clears the `auth` and `refresh` cookies (`Max-Age=0; Path=/`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      operationId: refreshAccessToken
+      summary: Refresh an access token
+      description: |
+        Requires the HttpOnly `refresh` cookie; no request body or Bearer
+        token is used. Consumes the current refresh token and rotates it,
+        returning a new 15-minute access token. The replacement refresh
+        token retains the session's expiry unless less than 24 hours remain,
+        in which case its expiry is extended to seven days from refresh.
+        Reusing a consumed refresh token revokes its session family.
+      security:
+        - refreshCookie: []
+      responses:
+        '200':
+          description: Access token refreshed.
+          headers:
+            Set-Cookie:
+              description: |
+                Sets `auth=<access_token>; Max-Age=900; Path=/; HttpOnly;
+                SameSite=Lax` and `refresh=<rotated_refresh_token>;
+                Expires=<date>; Path=/; HttpOnly; SameSite=Lax`.
+                `Secure` is also set in production.
+              schema:
+                type: string
+            Cache-Control:
+              description: Prevents caching of the token response.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenResponse'
+        '401':
+          description: Refresh cookie is missing, invalid, or expired. An invalid supplied cookie also clears both authentication cookies.
+          headers:
+            Cache-Control:
+              description: Prevents caching of the error response.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/apartments:
     get:
@@ -421,25 +480,35 @@ components:
       scheme: bearer
       bearerFormat: JWT-shaped
       description: |
-        Send the token returned by `POST /api/auth/login` as
+        Send the access token returned by `POST /api/auth/login` or
+        `POST /api/auth/refresh` as
         `Authorization: Bearer <access_token>`. The header takes precedence
-        over the cookie when both are present. The token currently has mixed
-        Base64/Base64url encoding as described under `cookieAuth`.
+        over the `auth` cookie when both are present. The token's encoding
+        is described under `cookieAuth`.
     cookieAuth:
       type: apiKey
       in: cookie
       name: auth
       description: |
-        HttpOnly cookie set by `POST /api/auth/login`; send it as `Cookie: auth=<token>`.
-        The current token has a regular Base64-encoded `{"alg":"HS256","typ":"JWT"}`
-        header and a regular Base64-encoded `AuthTokenPayload`. The HMAC-SHA256
-        signature is encoded as unpadded Base64url. The signature covers the
-        encoded header, a period, and the encoded payload, using server-side
-        `AUTH_KEY`. Because the header and payload still use regular Base64,
-        this is not yet standard JWS compact serialization; generic JWT
-        libraries may not verify it. The server also checks the current
-        database user and role on every authenticated request. The same token
-        may also be sent in the Authorization Bearer header.
+        HttpOnly access-token cookie set by login and refresh; send it as
+        `Cookie: auth=<access_token>`. The access token lasts 15 minutes.
+        The token has a Base64-encoded `{"alg":"HS256","typ":"JWT"}`
+        header, a Base64url-encoded `AuthTokenPayload`, and an unpadded
+        Base64url HMAC-SHA256 signature. The fixed header's encoding is also
+        valid Base64url. The signature covers the encoded header, a period,
+        and the encoded payload, using server-side `AUTH_KEY`. The server
+        also checks the current database user and role on every authenticated
+        request. The same token may be sent in the Authorization Bearer header.
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh
+      description: |
+        Opaque, single-use refresh token set in an HttpOnly `refresh` cookie
+        by login and refresh. It expires after seven days, subject to renewal
+        when refreshed within its last 24 hours. The server stores only its
+        SHA-256 hash. Send it to `POST /api/auth/refresh`; it is not accepted
+        as a Bearer token or as authentication for record endpoints.
   parameters:
     RecordId:
       name: id
@@ -517,17 +586,17 @@ components:
       required: [success]
       properties:
         success: { type: boolean, const: true }
-    LoginResponse:
+    AccessTokenResponse:
       type: object
       required: [success, access_token, token_type, expires_in]
       properties:
         success: { type: boolean, const: true }
         access_token: { type: string, minLength: 1, description: Signed token to use in the Authorization Bearer header. }
         token_type: { type: string, const: Bearer }
-        expires_in: { type: integer, const: 86400, description: Token lifetime in seconds. }
+        expires_in: { type: integer, const: 900, description: Access token lifetime in seconds. }
     AuthTokenPayload:
       type: object
-      description: Claims stored in the signed `auth` cookie token. This payload is not returned by any API response.
+      description: Claims stored in the signed access token, which is also sent in the `auth` cookie. This payload is not returned separately by any API response.
       additionalProperties: false
       required: [user, iat, exp]
       properties:
@@ -540,7 +609,7 @@ components:
             email: { type: string, format: email }
             role: { type: string, enum: [LANDLORD, TENANT] }
         iat: { type: integer, description: Issued-at time as Unix seconds. }
-        exp: { type: integer, description: Expiration time as Unix seconds; normally iat + 86400. }
+        exp: { type: integer, description: Expiration time as Unix seconds; normally iat + 900. }
     LoginInput:
       type: object
       required: [email, password]

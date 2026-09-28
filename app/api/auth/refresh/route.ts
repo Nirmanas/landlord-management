@@ -20,6 +20,7 @@ export async function POST() {
   }
 
   const session = await refreshSession(token);
+
   if (!session) {
     cookieStore.delete("auth");
     cookieStore.set("refresh", "", { maxAge: 0, path: REFRESH_COOKIE_PATH });
