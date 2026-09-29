@@ -42,6 +42,7 @@ export default function Page() {
         const errorData = await response.json();
         setServerError(errorData.error ?? "Sign in failed.");
       } else {
+        sessionStorage.setItem("showSignInSummary", "true");
         router.replace("/");
         router.refresh();
       }

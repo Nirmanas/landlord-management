@@ -11,8 +11,9 @@ import {
   LogOut,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SignInSummary } from "@/components/sign-in-summary";
 import { cn } from "@/lib/utils";
 
 const landlordNav = [
@@ -65,6 +66,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [showSignInSummary, setShowSignInSummary] = useState(false);
+  useEffect(() => {
+    if (sessionStorage.getItem("showSignInSummary") !== "true") return;
+    const timer = window.setTimeout(() => {
+      sessionStorage.removeItem("showSignInSummary");
+      setShowSignInSummary(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
   async function logOut() {
     setLoggingOut(true);
     setLogoutError("");
@@ -80,6 +90,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
   return (
     <div className="min-h-screen bg-zinc-50">
+      {showSignInSummary && (
+        <SignInSummary onClose={() => setShowSignInSummary(false)} />
+      )}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-zinc-200 bg-white lg:flex lg:flex-col">
         <div className="flex h-20 items-center gap-3 px-6">
           <div className="grid size-10 place-items-center rounded-xl bg-emerald-700 text-white">
