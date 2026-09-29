@@ -135,7 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background">
       {showSignInSummary && (
         <SignInSummary onClose={() => setShowSignInSummary(false)} />
       )}
@@ -182,7 +182,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </header>
-      <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</main>
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8"
+      >
+        {children}
+      </main>
+      <footer className="border-t border-brand-deep/40 bg-brand-surface/30 px-4 py-5 sm:px-6 lg:px-8">
+        <p className="mx-auto max-w-7xl text-sm font-semibold tracking-wide text-brand-pale">
+          LandLordManagement{" "}
+          <span className="text-muted-foreground">- LLM</span>
+        </p>
+      </footer>
     </div>
   );
 }

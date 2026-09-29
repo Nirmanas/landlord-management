@@ -10,7 +10,8 @@ export default async function TenantLayout({
   children: React.ReactNode;
 }) {
   const user = await auth();
-  if (!user || user.role !== "TENANT") forbidden();
+  if (!user) redirect("/login");
+  if (user.role !== "TENANT") forbidden();
   const data = await loadTenantData(user.id);
   return (
     <DataProvider data={data}>

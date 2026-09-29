@@ -140,4 +140,18 @@
   html {
     @apply font-sans;
   }
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+.auth-showcase {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .auth-showcase {
+    display: flex;
+  }
 }
