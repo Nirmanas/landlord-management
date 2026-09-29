@@ -1,15 +1,15 @@
 import { cn } from "@/lib/utils";
 
 const styles = {
-  neutral: "bg-zinc-100 text-zinc-700",
-  active: "bg-emerald-100 text-emerald-800",
-  upcoming: "bg-blue-100 text-blue-800",
-  ended: "bg-zinc-100 text-zinc-600",
-  unpaid: "bg-amber-100 text-amber-800",
-  overdue: "bg-rose-100 text-rose-800",
-  pending: "bg-blue-100 text-blue-800",
-  confirmed: "bg-emerald-100 text-emerald-800",
-  failed: "bg-rose-100 text-rose-800",
+  neutral: "bg-muted text-soft-foreground",
+  active: "bg-brand-surface-hover/50 text-brand-soft",
+  upcoming: "bg-info-surface/40 text-info",
+  ended: "bg-muted text-muted-foreground",
+  unpaid: "bg-warning-surface/40 text-warning-soft",
+  overdue: "bg-destructive-surface-hover/40 text-destructive-soft",
+  pending: "bg-info-surface/40 text-info",
+  confirmed: "bg-brand-surface-hover/50 text-brand-soft",
+  failed: "bg-destructive-surface-hover/40 text-destructive-soft",
 };
 
 export function Badge({

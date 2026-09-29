@@ -107,22 +107,22 @@ export default function Page() {
           <CardContent>
             {currentLease && apartment ? (
               <div className="grid gap-5 sm:grid-cols-[auto_1fr]">
-                <div className="grid size-14 place-items-center rounded-xl bg-emerald-50">
-                  <Building2 className="size-6 text-emerald-700" />
+                <div className="grid size-14 place-items-center rounded-xl bg-brand-surface/40">
+                  <Building2 className="size-6 text-brand" />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-semibold text-zinc-950">
+                    <h2 className="text-lg font-semibold text-foreground">
                       {apartment.name}
                     </h2>
                     <Badge tone={currentLease.status}>
                       {currentLease.status}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {apartment.address}
                   </p>
-                  <p className="mt-4 text-sm text-zinc-700">
+                  <p className="mt-4 text-sm text-soft-foreground">
                     <DateRange
                       start={currentLease.startDate}
                       end={currentLease.endDate}
@@ -134,7 +134,7 @@ export default function Page() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 No lease is assigned to this tenant.
               </p>
             )}
@@ -153,14 +153,14 @@ export default function Page() {
                 <Link
                   href="/tenant/payments"
                   key={payment.id}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 hover:bg-zinc-50"
+                  className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-accent"
                 >
-                  <CalendarDays className="size-4 text-emerald-700" />
+                  <CalendarDays className="size-4 text-brand" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-zinc-900">
+                    <p className="text-sm font-medium text-foreground">
                       {formatCurrency(payment.amountCents)}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       Due {period ? formatDate(period.dueDate) : "—"}
                     </p>
                   </div>
@@ -168,7 +168,7 @@ export default function Page() {
               );
             })}
             {!upcoming.length && (
-              <p className="py-6 text-center text-sm text-zinc-500">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 No upcoming payments.
               </p>
             )}

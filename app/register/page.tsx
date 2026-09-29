@@ -128,14 +128,14 @@ export default function Page() {
           {isSubmitting ? "Creating account…" : "Create account"}
           {!isSubmitting && <ArrowRight className="size-4" aria-hidden="true" />}
         </Button>
-        {serverError && <p role="alert" className="text-sm text-rose-700">{serverError}</p>}
+        {serverError && <p role="alert" className="text-sm text-destructive">{serverError}</p>}
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-600">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-semibold text-emerald-700 hover:underline"
+          className="font-semibold text-brand hover:underline"
         >
           Sign in
         </Link>

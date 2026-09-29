@@ -34,7 +34,7 @@ function PeriodForm({ lease }: { lease: Lease }) {
     <Field label="Period name"><Input required value={name} onChange={(e) => setName(e.target.value)} /></Field>
     <Field label="Period start"><Input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
     <Field label="Period end and due date"><Input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
-  </CardContent></Card>{error && <p role="alert" className="text-sm text-rose-700">{error}</p>}<Button type="submit" disabled={busy}>{busy ? "Creating…" : "Create period"}</Button></form>;
+  </CardContent></Card>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button type="submit" disabled={busy}>{busy ? "Creating…" : "Create period"}</Button></form>;
 }
 
 export default function Page() {

@@ -96,12 +96,12 @@ export default function Page() {
         </CardContent>
       </Card>
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
           Tenant payments
         </h2>
         {payments.length ? (
           <Card>
-            <CardContent className="divide-y divide-zinc-100 p-0">
+            <CardContent className="divide-y divide-border p-0">
               {payments.map((payment) => {
                 const tenant = data.tenants.find(
                   (item) => item.id === payment.tenantId,
@@ -112,10 +112,10 @@ export default function Page() {
                     className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
-                      <p className="font-medium text-zinc-900">
+                      <p className="font-medium text-foreground">
                         {tenant ? tenantName(tenant) : "Unknown tenant"}
                       </p>
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm text-muted-foreground">
                         {formatCurrency(payment.amountCents)}
                       </p>
                     </div>

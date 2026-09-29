@@ -34,11 +34,11 @@ export default function Page() {
             return (
               <Card key={apartment.id}>
                 <CardHeader>
-                  <div className="mb-3 grid size-10 place-items-center rounded-lg bg-emerald-50">
-                    <Building2 className="size-5 text-emerald-700" />
+                  <div className="mb-3 grid size-10 place-items-center rounded-lg bg-brand-surface/40">
+                    <Building2 className="size-5 text-brand" />
                   </div>
                   <CardTitle>{apartment.name}</CardTitle>
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-sm text-muted-foreground">
                     {apartment.address}
                   </p>
                 </CardHeader>

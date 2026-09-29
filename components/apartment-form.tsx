@@ -81,7 +81,7 @@ export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
         </CardContent>
       </Card>
 
-      {serverError && <p role="alert" className="text-sm text-rose-700">{serverError}</p>}
+      {serverError && <p role="alert" className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end gap-3">
         <Link

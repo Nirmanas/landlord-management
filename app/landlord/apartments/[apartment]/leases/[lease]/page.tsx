@@ -114,12 +114,12 @@ export default function Page() {
               return (
                 <div
                   key={tenantId}
-                  className="rounded-lg border border-zinc-200 p-3"
+                  className="rounded-lg border border-strong-border p-3"
                 >
-                  <p className="font-medium text-zinc-900">
+                  <p className="font-medium text-foreground">
                     {tenant ? tenantName(tenant) : "Unknown tenant"}
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-emerald-800">
+                  <p className="mt-1 text-sm font-semibold text-brand-soft">
                     {formatCurrency(share?.amountCents ?? 0)}
                   </p>
                 </div>
@@ -129,7 +129,7 @@ export default function Page() {
         </Card>
       </div>
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
           Payment periods
         </h2>
         <Button
@@ -152,18 +152,18 @@ export default function Page() {
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                       <div>
                         <CardTitle>{period.name}</CardTitle>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-muted-foreground">
                           <DateRange
                             start={period.startDate}
                             end={period.endDate}
                           />
                         </p>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-muted-foreground">
                           Due {formatDate(period.dueDate)}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <p className="font-semibold text-zinc-900">
+                        <p className="font-semibold text-foreground">
                           {formatCurrency(
                             payments.reduce((sum, p) => sum + p.amountCents, 0),
                           )}
@@ -182,7 +182,7 @@ export default function Page() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="divide-y divide-zinc-100 p-0">
+                  <CardContent className="divide-y divide-border p-0">
                     {payments.map((payment) => {
                       const tenant = data.tenants.find(
                         (t) => t.id === payment.tenantId,
@@ -193,10 +193,10 @@ export default function Page() {
                           className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div>
-                            <p className="font-medium text-zinc-900">
+                            <p className="font-medium text-foreground">
                               {tenant ? tenantName(tenant) : "Unknown tenant"}
                             </p>
-                            <p className="text-sm text-zinc-500">
+                            <p className="text-sm text-muted-foreground">
                               {formatCurrency(payment.amountCents)}
                             </p>
                           </div>

@@ -8,7 +8,7 @@ export function Label({
   return (
     <label
       className={cn(
-        "mb-1.5 block text-sm font-medium text-zinc-800",
+        "mb-1.5 block text-sm font-medium text-soft-foreground",
         className,
       )}
       {...props}
@@ -23,7 +23,7 @@ export function Input({
   return (
     <input
       className={cn(
-        "h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 shadow-sm outline-none placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15",
+        "h-10 w-full rounded-lg border border-strong-border bg-card px-3 text-sm text-foreground shadow-sm outline-none placeholder:text-subtle-foreground focus:border-brand-focus focus:ring-2 focus:ring-brand-focus/15",
         className,
       )}
       {...props}
@@ -38,7 +38,7 @@ export function Select({
   return (
     <select
       className={cn(
-        "h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15",
+        "h-10 w-full rounded-lg border border-strong-border bg-card px-3 text-sm text-foreground shadow-sm outline-none focus:border-brand-focus focus:ring-2 focus:ring-brand-focus/15",
         className,
       )}
       {...props}
@@ -53,7 +53,7 @@ export function Textarea({
   return (
     <textarea
       className={cn(
-        "min-h-24 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15",
+        "min-h-24 w-full rounded-lg border border-strong-border bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-subtle-foreground focus:border-brand-focus focus:ring-2 focus:ring-brand-focus/15",
         className,
       )}
       {...props}
@@ -78,7 +78,7 @@ export function Field({
     <div className={className}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );
 }

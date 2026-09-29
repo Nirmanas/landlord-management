@@ -3,19 +3,19 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive/50 aria-invalid:ring-3 aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-emerald-700 text-white hover:bg-emerald-800",
+        default: "bg-brand-solid text-brand-foreground hover:bg-brand-solid-hover",
         outline:
-          "border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
+          "border-strong-border bg-card text-soft-foreground hover:bg-accent",
         secondary:
-          "bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
+          "bg-brand-surface/40 text-brand-soft hover:bg-brand-surface-hover/60",
         ghost:
-          "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
+          "text-muted-foreground hover:bg-accent hover:text-foreground",
         destructive:
-          "bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:border-rose-300 focus-visible:ring-rose-200",
+          "bg-destructive-surface/40 text-destructive hover:bg-destructive-surface-hover/50 focus-visible:border-destructive-soft focus-visible:ring-destructive-surface-hover",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

@@ -42,7 +42,7 @@ export function ArchiveButton({ kind, id, destination }: { kind: "apartment" | "
       setError(cause instanceof Error ? cause.message : "The request failed.");
     } finally { setBusy(false); }
   }
-  return <span className="inline-flex flex-col gap-1"><Button type="button" variant="destructive" onClick={archive} disabled={busy}>Archive {kind}</Button>{error && <span role="alert" className="text-xs text-rose-700">{error}</span>}</span>;
+  return <span className="inline-flex flex-col gap-1"><Button type="button" variant="destructive" onClick={archive} disabled={busy}>Archive {kind}</Button>{error && <span role="alert" className="text-xs text-destructive">{error}</span>}</span>;
 }
 
 function PaymentActionButton({ id, mode }: { id: string; mode: "report" | "confirm" }) {
@@ -93,24 +93,24 @@ function PaymentActionButton({ id, mode }: { id: string; mode: "report" | "confi
         {label}
       </AlertDialogTrigger>
       <AlertDialogContent
-        className="w-[calc(100%-2rem)] gap-0 bg-white p-6 text-zinc-950 data-[size=default]:max-w-md data-[size=default]:sm:max-w-md sm:p-7"
+        className="w-[calc(100%-2rem)] gap-0 bg-popover p-6 text-popover-foreground data-[size=default]:max-w-md data-[size=default]:sm:max-w-md sm:p-7"
       >
-        <div className="grid size-12 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+        <div className="grid size-12 place-items-center rounded-xl bg-brand-surface/40 text-brand">
           <CheckCircle2 className="size-6" aria-hidden="true" />
         </div>
         <AlertDialogTitle className="mt-5 text-xl font-semibold tracking-tight">
           {title}
         </AlertDialogTitle>
-        <AlertDialogDescription className="mt-2 text-left leading-6 text-zinc-600">
+        <AlertDialogDescription className="mt-2 text-left leading-6 text-muted-foreground">
           {description}
         </AlertDialogDescription>
-        <dl className="mt-5 divide-y divide-zinc-100 rounded-xl border border-zinc-200 px-4 text-sm">
-          <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">Amount</dt><dd className="font-semibold">{payment ? formatCurrency(payment.amountCents) : "—"}</dd></div>
-          {apartment && <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">Apartment</dt><dd className="text-right font-medium">{apartment.name}</dd></div>}
-          {!reporting && tenant && <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">Tenant</dt><dd className="text-right font-medium">{tenantName(tenant)}</dd></div>}
-          {period && <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">Due</dt><dd className="font-medium">{formatDate(period.dueDate)}</dd></div>}
+        <dl className="mt-5 divide-y divide-border rounded-xl border border-strong-border px-4 text-sm">
+          <div className="flex justify-between gap-4 py-3"><dt className="text-muted-foreground">Amount</dt><dd className="font-semibold">{payment ? formatCurrency(payment.amountCents) : "—"}</dd></div>
+          {apartment && <div className="flex justify-between gap-4 py-3"><dt className="text-muted-foreground">Apartment</dt><dd className="text-right font-medium">{apartment.name}</dd></div>}
+          {!reporting && tenant && <div className="flex justify-between gap-4 py-3"><dt className="text-muted-foreground">Tenant</dt><dd className="text-right font-medium">{tenantName(tenant)}</dd></div>}
+          {period && <div className="flex justify-between gap-4 py-3"><dt className="text-muted-foreground">Due</dt><dd className="font-medium">{formatDate(period.dueDate)}</dd></div>}
         </dl>
-        {error && <p role="alert" className="mt-4 text-sm text-rose-700">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
         <AlertDialogFooter className="mx-0 mb-0 mt-6 border-0 bg-transparent p-0">
           <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
           <AlertDialogAction type="button" onClick={submit} disabled={busy || !payment}>

@@ -64,21 +64,21 @@ export default function Page() {
           </CardHeader>
           <CardContent className="p-0">
             {leases.length ? (
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-border">
                 {leases.map((lease) => (
                   <Link
                     href={landlordRoutes.lease(id, lease.id)}
                     key={lease.id}
-                    className="flex items-center justify-between p-4 hover:bg-zinc-50"
+                    className="flex items-center justify-between p-4 hover:bg-accent"
                   >
                     <div>
-                      <p className="font-medium text-zinc-900">
+                      <p className="font-medium text-foreground">
                         <DateRange
                           start={lease.startDate}
                           end={lease.endDate}
                         />
                       </p>
-                      <p className="mt-1 text-xs text-zinc-500">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {lease.tenantIds.length} tenant
                         {lease.tenantIds.length === 1 ? "" : "s"} ·{" "}
                         {formatCurrency(lease.totalRentCents)}
@@ -89,7 +89,7 @@ export default function Page() {
                 ))}
               </div>
             ) : (
-              <div className="p-8 text-center text-sm text-zinc-500">
+              <div className="p-8 text-center text-sm text-muted-foreground">
                 No leases are linked to this apartment.
               </div>
             )}

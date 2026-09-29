@@ -44,13 +44,13 @@ export function LeaseForm({ apartment, lease }: { apartment: Apartment; lease?: 
   }
   return <form onSubmit={submit} className="space-y-5">
     <Card><CardHeader><CardTitle>Lease information</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
-      <Field label="Apartment"><p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm">{apartment.name}</p></Field>
+      <Field label="Apartment"><p className="rounded-md border border-strong-border bg-background px-3 py-2 text-sm">{apartment.name}</p></Field>
       <Field label="Start date"><Input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
       <Field label="End date"><Input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
       <Field label="Total rent"><Input type="number" min="0.01" step="0.01" required value={rentalPrice} onChange={(e) => setRentalPrice(e.target.value)} /></Field>
     </CardContent></Card>
     <Card><CardHeader><CardTitle>Assigned tenants</CardTitle></CardHeader><CardContent className="space-y-3">
-      {!data.tenants.some((tenant) => !tenant.archivedAt) && <p className="text-sm text-zinc-500">No registered tenants are available yet. Tenants appear here after they create an account.</p>}
+      {!data.tenants.some((tenant) => !tenant.archivedAt) && <p className="text-sm text-muted-foreground">No registered tenants are available yet. Tenants appear here after they create an account.</p>}
       {data.tenants.some((tenant) => !tenant.archivedAt) && <Field label="Add a registered tenant">
         <Select aria-label="Add a registered tenant" value="" onChange={(event) => addTenant(event.target.value)} disabled={!availableTenants.length}>
           <option value="">{availableTenants.length ? "Select a tenant" : "All available tenants added"}</option>
@@ -61,12 +61,12 @@ export function LeaseForm({ apartment, lease }: { apartment: Apartment; lease?: 
         const tenant = data.tenants.find((item) => item.id === id);
         const share = shares.find((item) => item.tenantId === id);
         return tenant && <div key={id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
-          <span><span className="font-medium">{tenantName(tenant)}</span>{tenant.archivedAt && <span className="ml-2 text-zinc-500">Archived</span>}{share && <span className="ml-3 text-emerald-800">{formatCurrency(share.amountCents)}</span>}</span>
+          <span><span className="font-medium">{tenantName(tenant)}</span>{tenant.archivedAt && <span className="ml-2 text-muted-foreground">Archived</span>}{share && <span className="ml-3 text-brand-soft">{formatCurrency(share.amountCents)}</span>}</span>
           <Button type="button" variant="ghost" size="sm" onClick={() => removeTenant(id)}>Remove</Button>
         </div>;
       })}
     </CardContent></Card>
-    {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     <div className="flex justify-end gap-3"><Link href={lease ? landlordRoutes.lease(apartment.id, lease.id) : landlordRoutes.leases(apartment.id)}><Button type="button" variant="outline">Cancel</Button></Link><Button type="submit" disabled={busy}>{busy ? "Saving…" : lease ? "Save changes" : "Create lease"}</Button></div>
   </form>;
 }

@@ -73,33 +73,33 @@ export function SignInSummary({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-lg gap-0 bg-white p-6 text-zinc-950 sm:max-w-lg sm:p-8">
-        <div className={`grid size-12 place-items-center rounded-xl ${overdue || failed ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-lg gap-0 bg-popover p-6 text-popover-foreground sm:max-w-lg sm:p-8">
+        <div className={`grid size-12 place-items-center rounded-xl ${overdue || failed ? "bg-destructive-surface/40 text-destructive" : "bg-brand-surface/40 text-brand"}`}>
           {overdue || failed ? <AlertCircle className="size-6" aria-hidden="true" /> : <CheckCircle2 className="size-6" aria-hidden="true" />}
         </div>
-        <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-emerald-700">Your sign in summary</p>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-brand">Your sign in summary</p>
         <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">{title}</DialogTitle>
-        <DialogDescription className="mt-2 leading-6 text-zinc-600">{description}</DialogDescription>
+        <DialogDescription className="mt-2 leading-6 text-muted-foreground">{description}</DialogDescription>
 
         <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 sm:p-4">
-            <AlertCircle className="size-4 text-rose-600" aria-hidden="true" />
+          <div className="rounded-xl border border-strong-border bg-background p-3 sm:p-4">
+            <AlertCircle className="size-4 text-destructive" aria-hidden="true" />
             <p className="mt-3 text-2xl font-semibold">{overdue}</p>
-            <p className="text-xs text-zinc-600">Overdue</p>
+            <p className="text-xs text-muted-foreground">Overdue</p>
           </div>
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 sm:p-4">
-            <Clock3 className="size-4 text-amber-600" aria-hidden="true" />
+          <div className="rounded-xl border border-strong-border bg-background p-3 sm:p-4">
+            <Clock3 className="size-4 text-warning" aria-hidden="true" />
             <p className="mt-3 text-2xl font-semibold">{pending}</p>
-            <p className="text-xs text-zinc-600">{isTenant ? "In review" : "To confirm"}</p>
+            <p className="text-xs text-muted-foreground">{isTenant ? "In review" : "To confirm"}</p>
           </div>
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 sm:p-4">
-            <CalendarDays className="size-4 text-emerald-700" aria-hidden="true" />
+          <div className="rounded-xl border border-strong-border bg-background p-3 sm:p-4">
+            <CalendarDays className="size-4 text-brand" aria-hidden="true" />
             <p className="mt-3 text-2xl font-semibold">{upcoming}</p>
-            <p className="text-xs text-zinc-600">Upcoming</p>
+            <p className="text-xs text-muted-foreground">Upcoming</p>
           </div>
         </div>
-        {failed > 0 && <p className="mt-4 text-sm text-rose-700">{failed} failed payment{failed === 1 ? "" : "s"} {failed === 1 ? "needs" : "need"} attention.</p>}
-        {nextDue && <p className="mt-4 text-sm text-zinc-600">Next payment due {formatDate(nextDue)}.</p>}
+        {failed > 0 && <p className="mt-4 text-sm text-destructive">{failed} failed payment{failed === 1 ? "" : "s"} {failed === 1 ? "needs" : "need"} attention.</p>}
+        {nextDue && <p className="mt-4 text-sm text-muted-foreground">Next payment due {formatDate(nextDue)}.</p>}
 
         <DialogFooter className="mx-0 mb-0 mt-7 border-0 bg-transparent p-0">
           <DialogClose render={<Button type="button" variant="ghost" />}>

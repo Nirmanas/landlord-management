@@ -54,14 +54,14 @@ export default function Page() {
             return (
               <Card key={payment.id}>
                 <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <div className="grid size-11 place-items-center rounded-xl bg-zinc-100">
-                    <CreditCard className="size-5 text-zinc-600" />
+                  <div className="grid size-11 place-items-center rounded-xl bg-muted">
+                    <CreditCard className="size-5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-zinc-900">
+                    <p className="font-medium text-foreground">
                       {apartment?.name}
                     </p>
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {period && (
                         <DateRange
                           start={period.startDate}
@@ -72,7 +72,7 @@ export default function Page() {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
-                    <p className="text-lg font-semibold text-zinc-950">
+                    <p className="text-lg font-semibold text-foreground">
                       {formatCurrency(payment.amountCents)}
                     </p>
                     <PaymentBadge payment={payment} period={period} />

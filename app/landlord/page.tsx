@@ -2,7 +2,6 @@
 
 import { useAppData } from "@/components/data-provider";
 
-
 import Link from "next/link";
 import { Building2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +43,7 @@ export default function Page() {
           </CardHeader>
           <CardContent className="p-0">
             {pending.length ? (
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-border">
                 {pending.map((payment) => {
                   const tenant = data.tenants.find(
                     (t) => t.id === payment.tenantId,
@@ -59,18 +58,18 @@ export default function Page() {
                     <Link
                       href="/landlord/payments"
                       key={payment.id}
-                      className="flex items-center justify-between gap-4 p-4 hover:bg-zinc-50"
+                      className="flex items-center justify-between gap-4 p-4 hover:bg-accent"
                     >
                       <div>
-                        <p className="font-medium text-zinc-900">
+                        <p className="font-medium text-foreground">
                           {tenant ? tenantName(tenant) : "Unknown tenant"}
                         </p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-muted-foreground">
                           {apartment?.name}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-zinc-900">
+                        <p className="font-semibold text-foreground">
                           {formatCurrency(payment.amountCents)}
                         </p>
                         <Badge tone="pending">Pending confirmation</Badge>
@@ -80,7 +79,7 @@ export default function Page() {
                 })}
               </div>
             ) : (
-              <div className="p-8 text-center text-sm text-zinc-500">
+              <div className="p-8 text-center text-sm text-muted-foreground">
                 No payments are waiting for confirmation.
               </div>
             )}
@@ -91,37 +90,43 @@ export default function Page() {
             <CardTitle>Portfolio snapshot</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {data.apartments.filter((apartment) => !apartment.archivedAt).length === 0 && (
-              <div className="py-6 text-center text-sm text-zinc-500">
+            {data.apartments.filter((apartment) => !apartment.archivedAt)
+              .length === 0 && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
                 No apartments yet. Add your first apartment to start your
                 portfolio.
               </div>
             )}
-            {data.apartments.filter((item) => !item.archivedAt).map((apartment) => {
-              const active = data.leases.find(
-                (l) => l.apartmentId === apartment.id && l.status === "active" && !l.archivedAt,
-              );
-              return (
-                <Link
-                  href={landlordRoutes.apartment(apartment.id)}
-                  key={apartment.id}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 hover:bg-zinc-50"
-                >
-                  <div className="grid size-9 place-items-center rounded-lg bg-emerald-50">
-                    <Building2 className="size-4 text-emerald-700" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-900">
-                      {apartment.name}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {active ? "Active lease" : "No active lease"}
-                    </p>
-                  </div>
-                  <ChevronRight className="size-4 text-zinc-400" />
-                </Link>
-              );
-            })}
+            {data.apartments
+              .filter((item) => !item.archivedAt)
+              .map((apartment) => {
+                const active = data.leases.find(
+                  (l) =>
+                    l.apartmentId === apartment.id &&
+                    l.status === "active" &&
+                    !l.archivedAt,
+                );
+                return (
+                  <Link
+                    href={landlordRoutes.apartment(apartment.id)}
+                    key={apartment.id}
+                    className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-accent"
+                  >
+                    <div className="grid size-9 place-items-center rounded-lg bg-brand-surface/40">
+                      <Building2 className="size-4 text-brand" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {apartment.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {active ? "Active lease" : "No active lease"}
+                      </p>
+                    </div>
+                    <ChevronRight className="size-4 text-subtle-foreground" />
+                  </Link>
+                );
+              })}
           </CardContent>
         </Card>
       </div>

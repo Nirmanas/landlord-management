@@ -85,17 +85,17 @@ export default function Page() {
           Sign in <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
         {serverError && (
-          <p role="alert" className="text-sm text-rose-700">
+          <p role="alert" className="text-sm text-destructive">
             {serverError}
           </p>
         )}
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-600">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         New here?{" "}
         <Link
           href="/register"
-          className="font-semibold text-emerald-700 hover:underline"
+          className="font-semibold text-brand hover:underline"
         >
           Create an account
         </Link>

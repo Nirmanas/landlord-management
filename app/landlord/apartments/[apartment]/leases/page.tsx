@@ -15,8 +15,8 @@ import { useParams } from "next/navigation";
 
 const tableClass = "w-full min-w-175 text-left text-sm";
 const thClass =
-  "border-b border-zinc-200 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500";
-const tdClass = "border-b border-zinc-100 px-4 py-4 text-zinc-700";
+  "border-b border-strong-border bg-background px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+const tdClass = "border-b border-border px-4 py-4 text-soft-foreground";
 
 export default function Page() {
   const [archived, setArchived] = useState(false);

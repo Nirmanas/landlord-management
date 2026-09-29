@@ -47,8 +47,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
+                  ? "bg-brand-surface/40 text-brand-soft"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               <Icon className="size-4" />
@@ -89,18 +89,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-background">
       {showSignInSummary && (
         <SignInSummary onClose={() => setShowSignInSummary(false)} />
       )}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-zinc-200 bg-white lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-strong-border bg-card lg:flex lg:flex-col">
         <div className="flex h-20 items-center gap-3 px-6">
-          <div className="grid size-10 place-items-center rounded-xl bg-emerald-700 text-white">
+          <div className="grid size-10 place-items-center rounded-xl bg-brand-solid text-brand-foreground">
             <Building2 className="size-5" />
           </div>
           <div>
-            <p className="font-semibold text-zinc-950">LandLord Management</p>
-            <p className="text-xs text-zinc-500">Property management</p>
+            <p className="font-semibold text-foreground">LandLord Management</p>
+            <p className="text-xs text-muted-foreground">Property management</p>
           </div>
         </div>
         <div className="flex-1 px-3">
@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-strong-border bg-card/95 backdrop-blur">
           <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <Button
               variant="ghost"
@@ -119,17 +119,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Menu className="size-5" />
             </Button>
             <div className="mr-auto lg:hidden">
-              <p className="font-semibold text-zinc-950">LLM</p>
+              <p className="font-semibold text-foreground">LLM</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button type="button" variant="ghost" onClick={logOut} disabled={loggingOut}>
                 <LogOut className="size-4" /> {loggingOut ? "Logging out…" : "Log out"}
               </Button>
-              {logoutError && <span role="alert" className="text-xs text-rose-700">{logoutError}</span>}
+              {logoutError && <span role="alert" className="text-xs text-destructive">{logoutError}</span>}
             </div>
           </div>
           {open && (
-            <div className="border-t border-zinc-100 p-3 lg:hidden">
+            <div className="border-t border-border p-3 lg:hidden">
               <NavLinks onNavigate={() => setOpen(false)} />
             </div>
           )}

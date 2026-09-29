@@ -28,7 +28,7 @@ function TenantForm({ tenant }: { tenant: Tenant }) {
       <Field label="Name"><Input required value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <Field label="Phone number"><Input required type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} /></Field>
     </CardContent></Card>
-    {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button>
   </form>;
 }

@@ -44,12 +44,12 @@ export default function Page() {
             <CardTitle>Contact details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="flex items-center gap-2 text-sm text-zinc-700">
-              <Mail className="size-4 text-zinc-400" />
+            <p className="flex items-center gap-2 text-sm text-soft-foreground">
+              <Mail className="size-4 text-subtle-foreground" />
               {tenant.email}
             </p>
-            <p className="flex items-center gap-2 text-sm text-zinc-700">
-              <Phone className="size-4 text-zinc-400" />
+            <p className="flex items-center gap-2 text-sm text-soft-foreground">
+              <Phone className="size-4 text-subtle-foreground" />
               {tenant.phone}
             </p>
           </CardContent>
@@ -71,13 +71,13 @@ export default function Page() {
                 <Link
                   href={landlordRoutes.lease(lease.apartmentId, lease.id)}
                   key={lease.id}
-                  className="flex items-center justify-between p-4 hover:bg-zinc-50"
+                  className="flex items-center justify-between p-4 hover:bg-accent"
                 >
                   <div>
-                    <p className="font-medium text-zinc-900">
+                    <p className="font-medium text-foreground">
                       {apartment?.name}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       <DateRange start={lease.startDate} end={lease.endDate} />{" "}
                       · Share {formatCurrency(share?.amountCents ?? 0)}
                     </p>
@@ -87,7 +87,7 @@ export default function Page() {
               );
             })}
             {!leases.length && (
-              <div className="p-8 text-center text-sm text-zinc-500">
+              <div className="p-8 text-center text-sm text-muted-foreground">
                 No leases assigned.
               </div>
             )}

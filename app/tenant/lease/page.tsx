@@ -48,10 +48,10 @@ export default function Page() {
         description="Your current agreement and individual rent share."
       />
       <Card>
-        <div className="border-b border-zinc-100 bg-linear-to-r from-emerald-800 to-emerald-600 p-6 text-white">
-          <p className="text-sm text-emerald-100">Current residence</p>
+        <div className="border-b border-border bg-linear-to-r from-brand-deep to-brand-solid p-6 text-brand-foreground">
+          <p className="text-sm text-brand-tint">Current residence</p>
           <h2 className="mt-1 text-2xl font-semibold">{apartment.name}</h2>
-          <p className="mt-2 text-sm text-emerald-50">
+          <p className="mt-2 text-sm text-brand-faint">
             {apartment.address}
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function Page() {
             {formatCurrency(currentLease.totalRentCents)}
           </DetailItem>
           <DetailItem label="Your share">
-            <span className="text-emerald-800">
+            <span className="text-brand-soft">
               {formatCurrency(share?.amountCents ?? 0)}
             </span>
           </DetailItem>
