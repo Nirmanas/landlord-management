@@ -77,6 +77,7 @@ export async function POST(request: Request) {
     } }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === "PERIOD_CONFLICT") return Response.json({ error: "A period already covers these dates." }, { status: 409 });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && ["P2003", "P2025"].includes(error.code)) return Response.json({ error: "A referenced record was not found." }, { status: 404 });
     if (error instanceof Prisma.PrismaClientKnownRequestError && ["P2002", "P2034"].includes(error.code)) return Response.json({ error: "The request conflicts with an existing record. Try again." }, { status: 409 });
     console.error("Create period failed", error);
     return Response.json({ error: "The request failed." }, { status: 500 });

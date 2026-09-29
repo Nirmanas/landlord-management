@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       expires_in: 60 * 15,
     },
     {
-      status: 200,
+      status: 201,
       headers: { "Cache-Control": "no-store", Pragma: "no-cache" },
     },
   );

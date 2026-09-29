@@ -69,7 +69,11 @@ export async function POST(request: Request) {
     if (!property) return Response.json({ error: "Apartment not found." }, { status: 404 });
     if (property.archivedAt) return Response.json({ error: "Apartment is unavailable." }, { status: 409 });
     const registered = await prisma.tenant.count({ where: { id: { in: ids }, user: { role: { role: "TENANT" } }, archivedAt: null } });
-    if (registered !== ids.length) return Response.json({ error: "Select only registered, available tenants." }, { status: 422 });
+    if (registered !== ids.length) {
+      const existing = await prisma.tenant.count({ where: { id: { in: ids } } });
+      if (existing !== ids.length) return Response.json({ error: "Tenant not found." }, { status: 404 });
+      return Response.json({ error: "Select only registered, available tenants." }, { status: 422 });
+    }
     const lease = await prisma.$transaction(async (tx) => {
       const conflict = await tx.lease.findFirst({ where: { propertyId, startDate: { lte: endDate }, endDate: { gte: startDate } } });
       if (conflict) throw new Error("LEASE_CONFLICT");
@@ -87,6 +91,7 @@ export async function POST(request: Request) {
     } }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === "LEASE_CONFLICT") return Response.json({ error: "The apartment already has a lease in that date range." }, { status: 409 });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && ["P2003", "P2025"].includes(error.code)) return Response.json({ error: "A referenced record was not found." }, { status: 404 });
     if (error instanceof Prisma.PrismaClientKnownRequestError && ["P2002", "P2034"].includes(error.code)) return Response.json({ error: "The request conflicts with an existing record. Try again." }, { status: 409 });
     console.error("Create lease failed", error);
     return Response.json({ error: "The request failed." }, { status: 500 });

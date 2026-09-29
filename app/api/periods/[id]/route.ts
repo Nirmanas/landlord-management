@@ -60,7 +60,7 @@ export async function PUT(request: Request, { params }: Context) {
       id: String(period.id), leaseId: String(period.leaseId), name: period.name,
       startDate: period.startDate.toISOString().slice(0, 10), endDate: period.endDate.toISOString().slice(0, 10),
       dueDate: period.dueDate.toISOString().slice(0, 10), archivedAt: period.archivedAt?.toISOString() ?? null,
-    } });
+    } }, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") return Response.json({ error: "Payment period not found." }, { status: 404 });
     console.error("Update period failed", error);

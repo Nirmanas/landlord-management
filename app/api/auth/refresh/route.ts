@@ -75,6 +75,6 @@ export async function POST() {
       token_type: "Bearer",
       expires_in: ACCESS_DURATION_SECONDS,
     },
-    { headers: { "Cache-Control": "no-store", Pragma: "no-cache" } },
+    { status: 201, headers: { "Cache-Control": "no-store", Pragma: "no-cache" } },
   );
 }

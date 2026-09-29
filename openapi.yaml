@@ -68,7 +68,7 @@ paths:
             schema:
               $ref: '#/components/schemas/LoginInput'
       responses:
-        '200':
+        '201':
           description: Signed in.
           headers:
             Set-Cookie:
@@ -133,7 +133,7 @@ paths:
       security:
         - refreshCookie: []
       responses:
-        '200':
+        '201':
           description: Access token refreshed.
           headers:
             Set-Cookie:
@@ -236,7 +236,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ApartmentInput'
       responses:
-        '200':
+        '201':
           description: Updated apartment.
           content:
             application/json:
@@ -339,7 +339,7 @@ paths:
             schema:
               $ref: '#/components/schemas/LeaseInput'
       responses:
-        '200':
+        '201':
           description: Updated lease.
           content:
             application/json:
@@ -442,7 +442,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PeriodNameInput'
       responses:
-        '200':
+        '201':
           description: Updated payment period.
           content:
             application/json:
@@ -530,7 +530,7 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/AuthErrorResponse' }
     UnprocessableContent:
-      description: Well-formed JSON with invalid fields, references, or date relationships.
+      description: Well-formed JSON with invalid fields or date relationships, or an unavailable tenant reference.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -551,7 +551,7 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
     NotFound:
-      description: Record or tenant profile does not exist or is outside the caller's scope.
+      description: Record, referenced tenant, or tenant profile does not exist or is outside the caller's scope.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
