@@ -1,0 +1,42 @@
+info:
+  name: "Laikotarpiai: blogi laukai → 422"
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/periods"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "leaseId": "{{leaseId}}",
+        "name": "",
+        "startDate": "2027-01-01",
+        "endDate": "2027-01-31"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("POST /api/periods → 422", function () {
+          expect(res.status).to.equal(422);
+        });
+
+        test("Grąžinta klaida", function () {
+          expect(res.body.error).to.be.a("string").and.not.empty;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

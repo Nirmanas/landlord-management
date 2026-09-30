@@ -1,0 +1,35 @@
+opencollection: 1.0.0
+
+info:
+  name: Saitynai
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: bearer
+    token: ""
+  variables:
+    - name: baseUrl
+      value: https://saitynai.nirmanas.dev
+    - name: accessToken
+      value: ""
+    - name: apartmentId
+      value: "1"
+    - name: tenantId
+      value: "2"
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

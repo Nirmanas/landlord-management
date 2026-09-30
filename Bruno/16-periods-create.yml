@@ -1,0 +1,51 @@
+info:
+  name: "Laikotarpiai: POST → 201"
+  type: http
+  seq: 15
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/periods"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "leaseId": "{{leaseId}}",
+        "name": "2027 sausis",
+        "startDate": "2027-01-01",
+        "endDate": "2027-01-31"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: if (res.status === 201 && res.body?.data?.id) bru.setVar("periodId", res.body.data.id);
+    - type: tests
+      code: |-
+        test("POST /api/periods → 201", function () {
+          expect(res.status).to.equal(201);
+        });
+
+        test("Laikotarpio atsakymo laukai", function () {
+          expect(res.body).to.have.property("data");
+          expect(res.body.data).to.have.property("id");
+          expect(res.body.data).to.have.property("leaseId");
+          expect(res.body.data).to.have.property("name");
+          expect(res.body.data).to.have.property("startDate");
+          expect(res.body.data).to.have.property("endDate");
+          expect(res.body.data).to.have.property("dueDate");
+          expect(res.body.data).to.have.property("archivedAt");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

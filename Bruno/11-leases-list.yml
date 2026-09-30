@@ -1,0 +1,31 @@
+info:
+  name: "Sutartys: GET sąrašą → 200"
+  type: http
+  seq: 10
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/leases"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("GET /api/leases → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Sąraše yra sukurtas įrašas", function () {
+          expect(res.body.data).to.be.an("array");
+          expect(res.body.data.some(item => item.id === bru.getVar("leaseId"))).to.equal(true);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

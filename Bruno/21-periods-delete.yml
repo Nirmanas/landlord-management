@@ -1,0 +1,31 @@
+info:
+  name: "Laikotarpiai: DELETE → 200"
+  type: http
+  seq: 20
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/api/periods/{{periodId}}"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("DELETE /api/periods/{{periodId}} → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Grąžintas tinkamas įrašas", function () {
+          expect(res.body.data.id).to.equal(bru.getVar("periodId"));
+          expect(res.body.data.archivedAt).to.be.a("string").and.not.empty;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

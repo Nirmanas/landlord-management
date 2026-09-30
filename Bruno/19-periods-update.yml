@@ -1,0 +1,40 @@
+info:
+  name: "Laikotarpiai: PUT įrašą → 201"
+  type: http
+  seq: 18
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/periods/{{periodId}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "2027 sausis (pakeista)"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("PUT /api/periods/{{periodId}} → 201", function () {
+          expect(res.status).to.equal(201);
+        });
+
+        test("Grąžintas tinkamas įrašas", function () {
+          expect(res.body.data.id).to.equal(bru.getVar("periodId"));
+          expect(res.body.data.name).to.equal("2027 sausis (pakeista)");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

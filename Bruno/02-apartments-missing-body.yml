@@ -1,0 +1,30 @@
+info:
+  name: "Butai: nėra JSON turinio → 400"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/apartments"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("POST /api/apartments → 400", function () {
+          expect(res.status).to.equal(400);
+        });
+
+        test("Grąžinta klaida", function () {
+          expect(res.body.error).to.be.a("string").and.not.empty;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

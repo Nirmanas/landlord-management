@@ -1,0 +1,11 @@
+name: Local
+variables:
+- name: baseUrl
+  value: http://localhost:3000
+- name: landlordEmail
+  value: ''
+- name: landlordPassword
+  value: ''
+  secret: true
+- name: tenantId
+  value: '1'
