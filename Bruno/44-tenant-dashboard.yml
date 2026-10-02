@@ -1,0 +1,99 @@
+info:
+  name: Nuomininko valdymo skydelis → 200
+  type: http
+  seq: 44
+http:
+  method: GET
+  url: "{{baseUrl}}/api/tenant/dashboard"
+  auth:
+    type: bearer
+    token: "{{tenantAccessToken}}"
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getEnvVar("tenantEmail") || !bru.getEnvVar("tenantPassword") || !bru.getVar("tenantAccessToken")) {
+          bru.runner.skipRequest();
+        }
+    - type: tests
+      code: |-
+        test("GET /api/tenant/dashboard → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Suvestinės sumos ir artimiausi mokėjimai", function () {
+          const data = res.body.data;
+          expect(data).to.be.an("object");
+          expect(data).to.include.all.keys("tenant", "currentLease", "apartment", "shareCents", "outstandingCents", "outstandingCount", "nextPayment", "upcomingPayments");
+          ["outstandingCents", "outstandingCount"].forEach(function (key) {
+            expect(Number.isInteger(data[key])).to.equal(true);
+            expect(data[key]).to.be.at.least(0);
+          });
+          if (data.shareCents !== null) {
+            expect(Number.isInteger(data.shareCents)).to.equal(true);
+            expect(data.shareCents).to.be.at.least(0);
+          }
+          expect(data.upcomingPayments).to.be.an("array");
+          expect(data.upcomingPayments.length).to.be.at.most(3);
+          expect(data.outstandingCount).to.be.at.least(data.upcomingPayments.length);
+          data.upcomingPayments.forEach(function (payment, index, payments) {
+            expect(payment).to.include.all.keys("id", "amountCents", "dueDate");
+            expect(payment.id).to.be.a("string").and.match(/^[1-9]\d*$/);
+            expect(Number.isInteger(payment.amountCents)).to.equal(true);
+            expect(payment.amountCents).to.be.at.least(0);
+            expect(payment.dueDate).to.be.a("string").and.match(/^\d{4}-\d{2}-\d{2}$/);
+            if (index > 0) {
+              const previous = payments[index - 1];
+              expect(previous.dueDate <= payment.dueDate).to.equal(true);
+              if (previous.dueDate === payment.dueDate) expect(Number(previous.id)).to.be.below(Number(payment.id));
+            }
+          });
+          if (data.upcomingPayments.length === 0) expect(data.nextPayment).to.equal(null);
+          else expect(data.nextPayment).to.deep.equal(data.upcomingPayments[0]);
+          if (data.outstandingCount === 0) expect(data.outstandingCents).to.equal(0);
+        });
+
+        test("Profilis ir dabartinis būstas gali būti null", function () {
+          const data = res.body.data;
+          if (data.tenant !== null) {
+            const tenant = data.tenant;
+            expect(tenant).to.include.all.keys("id", "firstName", "lastName", "email", "phone", "archivedAt");
+            expect(tenant.id).to.be.a("string").and.match(/^[1-9]\d*$/);
+            expect(tenant.id).to.equal(String(bru.getEnvVar("tenantId") || bru.getVar("tenantId") || ""));
+            ["firstName", "lastName", "email", "phone"].forEach(function (key) {
+              expect(tenant[key]).to.be.a("string");
+            });
+            if (tenant.archivedAt !== null) expect(tenant.archivedAt).to.be.a("string");
+          }
+          if (data.currentLease === null) {
+            expect(data.apartment).to.equal(null);
+            expect(data.shareCents).to.equal(null);
+          } else {
+            const lease = data.currentLease;
+            expect(lease).to.include.all.keys("id", "apartmentId", "startDate", "endDate", "status", "totalRentCents", "tenantIds", "archivedAt");
+            ["id", "apartmentId"].forEach(function (key) {
+              expect(lease[key]).to.be.a("string").and.match(/^[1-9]\d*$/);
+            });
+            ["startDate", "endDate"].forEach(function (key) {
+              expect(lease[key]).to.be.a("string").and.match(/^\d{4}-\d{2}-\d{2}$/);
+            });
+            expect(["upcoming", "active", "ended"]).to.include(lease.status);
+            expect(Number.isInteger(lease.totalRentCents)).to.equal(true);
+            expect(lease.totalRentCents).to.be.at.least(0);
+            expect(lease.tenantIds).to.be.an("array");
+            lease.tenantIds.forEach(id => expect(id).to.be.a("string").and.match(/^[1-9]\d*$/));
+            if (lease.archivedAt !== null) expect(lease.archivedAt).to.be.a("string");
+            expect(data.apartment).to.include.all.keys("id", "name", "address", "archivedAt");
+            expect(data.apartment.id).to.equal(lease.apartmentId);
+            expect(data.apartment.name).to.be.a("string");
+            expect(data.apartment.address).to.be.a("string");
+            if (data.apartment.archivedAt !== null) expect(data.apartment.archivedAt).to.be.a("string");
+            if (data.tenant !== null) expect(lease.tenantIds).to.include(data.tenant.id);
+          }
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

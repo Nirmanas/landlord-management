@@ -1,0 +1,35 @@
+info:
+  name: Nuomotojo nuomininkų katalogas → 200
+  type: http
+  seq: 42
+http:
+  method: GET
+  url: "{{baseUrl}}/api/landlord/tenants"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("GET /api/landlord/tenants → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Nuomininkų kontaktų sąrašas", function () {
+          expect(res.body.data).to.be.an("array");
+          res.body.data.forEach(function (tenant) {
+            expect(tenant).to.include.all.keys("id", "firstName", "lastName", "email", "phone", "archivedAt");
+            expect(tenant.id).to.be.a("string").and.match(/^[1-9]\d*$/);
+            ["firstName", "lastName", "email", "phone"].forEach(function (key) {
+              expect(tenant[key]).to.be.a("string");
+            });
+            if (tenant.archivedAt !== null) expect(tenant.archivedAt).to.be.a("string");
+          });
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

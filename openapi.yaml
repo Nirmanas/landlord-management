@@ -3,7 +3,8 @@ info:
   title: Landlord Management API
   version: 0.1.0
   description: |
-    HTTP API for apartments, leases, lease payment periods, and authentication.
+    HTTP API for dashboards, apartments, leases, lease payment periods, tenants,
+    payments, and authentication.
     Record IDs are positive decimal strings. All record responses use a `data`
     envelope; record errors use an `error` envelope.
 
@@ -32,7 +33,17 @@ paths:
       tags: [Dashboards]
       operationId: landlordDashboard
       summary: Get the landlord dashboard in one request
-      description: Returns owned apartment snapshots, active lease and tenant counts, outstanding totals and pending payment cards. The tenant directory count includes all registered tenant accounts.
+      description: |
+        Returns owned, unarchived apartment snapshots, active lease and tenant
+        counts, outstanding totals and pending payment cards. Active leases
+        are unarchived, belong to unarchived owned apartments, and include
+        today's date between their start and end dates. The tenant count
+        includes registered tenant accounts across the directory, excluding
+        archived profiles. Outstanding totals include every payment that is
+        not confirmed, including archived history; pending cards are payments
+        awaiting review. Apartments are ordered by ID descending; pending
+        payments by payment date and ID descending. Empty results return zero
+        metrics and empty arrays.
       responses:
         "200":
           description: Dashboard data.
@@ -47,7 +58,21 @@ paths:
       tags: [Dashboards]
       operationId: tenantDashboard
       summary: Get the tenant dashboard in one request
-      description: Returns the signed-in tenant's profile, current home and rent share, outstanding totals and the next three upcoming payments.
+      description: |
+        Returns the signed-in tenant's profile, current home and rent share,
+        outstanding totals and at most three upcoming payments. Dates use
+        today's date in the server timezone. Assigned leases are ordered by
+        start date descending; the current lease is the first active lease,
+        otherwise the first upcoming lease, otherwise the first lease in that
+        order. Archived assigned leases remain eligible. Lease dates are
+        inclusive when determining active status. Outstanding totals include
+        all payments that are not confirmed, including overdue and archived
+        history. Upcoming payments are outstanding payments due today or later,
+        ordered by due date and ID ascending; nextPayment is the first one.
+        A missing profile returns tenant as null. With no assigned lease,
+        currentLease, apartment and shareCents are null. With no outstanding
+        payments, totals are zero; with no upcoming payments, nextPayment is
+        null and upcomingPayments is empty.
       responses:
         "200":
           description: Dashboard data. Profile and current home may be null.

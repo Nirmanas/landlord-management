@@ -1,0 +1,36 @@
+info:
+  name: Nuomotojas skaito nuomininko kontaktus → 200
+  type: http
+  seq: 43
+http:
+  method: GET
+  url: "{{baseUrl}}/api/landlord/tenants/{{tenantId}}"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("GET /api/landlord/tenants/{{tenantId}} → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Pasirinkto nuomininko kontaktai", function () {
+          const tenant = res.body.data;
+          const tenantId = String(bru.getEnvVar("tenantId") || bru.getVar("tenantId") || "");
+          expect(tenant).to.be.an("object");
+          expect(tenant).to.include.all.keys("id", "firstName", "lastName", "email", "phone", "archivedAt");
+          expect(tenant.id).to.be.a("string").and.match(/^[1-9]\d*$/);
+          expect(tenant.id).to.equal(tenantId);
+          ["firstName", "lastName", "email", "phone"].forEach(function (key) {
+            expect(tenant[key]).to.be.a("string");
+          });
+          if (tenant.archivedAt !== null) expect(tenant.archivedAt).to.be.a("string");
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

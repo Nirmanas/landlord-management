@@ -1,0 +1,59 @@
+info:
+  name: Nuomotojo valdymo skydelis → 200
+  type: http
+  seq: 41
+http:
+  method: GET
+  url: "{{baseUrl}}/api/landlord/dashboard"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("GET /api/landlord/dashboard → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Suvestinės laukai ir skaitikliai", function () {
+          const data = res.body.data;
+          expect(data).to.be.an("object");
+          expect(data).to.include.all.keys("metrics", "pendingPayments", "apartments");
+          expect(data.metrics).to.be.an("object");
+          ["apartments", "activeLeases", "tenants", "outstandingCount", "outstandingCents", "pendingCount"].forEach(function (key) {
+            expect(data.metrics).to.have.property(key);
+            expect(Number.isInteger(data.metrics[key])).to.equal(true);
+            expect(data.metrics[key]).to.be.at.least(0);
+          });
+          expect(data.apartments).to.be.an("array");
+          expect(data.pendingPayments).to.be.an("array");
+          expect(data.metrics.apartments).to.equal(data.apartments.length);
+          expect(data.metrics.pendingCount).to.equal(data.pendingPayments.length);
+          expect(data.metrics.outstandingCount).to.be.at.least(data.metrics.pendingCount);
+          expect(data.metrics.outstandingCents).to.be.at.least(data.pendingPayments.reduce((sum, payment) => sum + payment.amountCents, 0));
+          if (data.metrics.outstandingCount === 0) expect(data.metrics.outstandingCents).to.equal(0);
+        });
+
+        test("Butų ir laukiančių mokėjimų kortelės", function () {
+          res.body.data.apartments.forEach(function (apartment) {
+            expect(apartment).to.include.all.keys("id", "name", "hasActiveLease");
+            expect(apartment.id).to.be.a("string").and.match(/^[1-9]\d*$/);
+            expect(apartment.name).to.be.a("string");
+            expect(apartment.hasActiveLease).to.be.a("boolean");
+          });
+          res.body.data.pendingPayments.forEach(function (payment) {
+            expect(payment).to.include.all.keys("id", "amountCents", "tenantName", "apartmentName");
+            expect(payment.id).to.be.a("string").and.match(/^[1-9]\d*$/);
+            expect(Number.isInteger(payment.amountCents)).to.equal(true);
+            expect(payment.amountCents).to.be.at.least(0);
+            expect(payment.tenantName).to.be.a("string");
+            expect(payment.apartmentName).to.be.a("string");
+          });
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

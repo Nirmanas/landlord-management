@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { prisma } from "../prisma";
 
-export const ACCESS_DURATION_SECONDS = 15 * 60;
+export const ACCESS_DURATION_SECONDS = 1 * 60 * 60;
 export const REFRESH_DURATION_SECONDS = 7 * 24 * 60 * 60;
 export const REFRESH_COOKIE_PATH = "/";
 

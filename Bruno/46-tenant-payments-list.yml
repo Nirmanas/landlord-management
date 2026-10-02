@@ -1,0 +1,44 @@
+info:
+  name: Nuomininko mokėjimų sąrašas → 200
+  type: http
+  seq: 46
+http:
+  method: GET
+  url: "{{baseUrl}}/api/tenant/payments"
+  auth:
+    type: bearer
+    token: "{{tenantAccessToken}}"
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getEnvVar("tenantEmail") || !bru.getEnvVar("tenantPassword") || !bru.getVar("tenantAccessToken")) {
+          bru.runner.skipRequest();
+        }
+    - type: tests
+      code: |-
+        test("GET /api/tenant/payments → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Tik pasirinkto nuomininko mokėjimai", function () {
+          const tenantId = String(bru.getEnvVar("tenantId") || bru.getVar("tenantId") || "");
+          expect(tenantId).to.match(/^[1-9]\d*$/);
+          expect(res.body.data).to.be.an("array");
+          res.body.data.forEach(function (payment) {
+            expect(payment).to.include.all.keys("id", "paymentPeriodId", "leaseId", "tenantId", "amountCents", "status");
+            ["id", "paymentPeriodId", "leaseId", "tenantId"].forEach(function (key) {
+              expect(payment[key]).to.be.a("string").and.match(/^[1-9]\d*$/);
+            });
+            expect(payment.tenantId).to.equal(tenantId);
+            expect(Number.isInteger(payment.amountCents)).to.equal(true);
+            expect(payment.amountCents).to.be.at.least(0);
+            expect(["unpaid", "pending", "confirmed", "failed"]).to.include(payment.status);
+          });
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

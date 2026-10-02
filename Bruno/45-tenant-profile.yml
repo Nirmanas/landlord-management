@@ -1,0 +1,42 @@
+info:
+  name: Nuomininko kontaktų profilis → 200
+  type: http
+  seq: 45
+http:
+  method: GET
+  url: "{{baseUrl}}/api/tenant/profile"
+  auth:
+    type: bearer
+    token: "{{tenantAccessToken}}"
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getEnvVar("tenantEmail") || !bru.getEnvVar("tenantPassword") || !bru.getVar("tenantAccessToken")) {
+          bru.runner.skipRequest();
+        }
+    - type: tests
+      code: |-
+        test("GET /api/tenant/profile → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Prisijungusio nuomininko profilis arba null", function () {
+          expect(res.body).to.have.property("data");
+          const tenant = res.body.data;
+          if (tenant === null) return;
+          expect(tenant).to.be.an("object");
+          expect(tenant).to.include.all.keys("id", "firstName", "lastName", "email", "phone", "archivedAt");
+          expect(tenant.id).to.be.a("string").and.match(/^[1-9]\d*$/);
+          expect(tenant.id).to.equal(String(bru.getEnvVar("tenantId") || bru.getVar("tenantId") || ""));
+          ["firstName", "lastName", "email", "phone"].forEach(function (key) {
+            expect(tenant[key]).to.be.a("string");
+          });
+          if (tenant.archivedAt !== null) expect(tenant.archivedAt).to.be.a("string");
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
