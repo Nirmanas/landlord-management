@@ -64,7 +64,8 @@ paths:
         - Authentication
       operationId: login
       summary: Sign in
-      description: Sets HttpOnly `auth` and `refresh` cookies and returns the access
+      description:
+        Sets HttpOnly `auth` and `refresh` cookies and returns the access
         token in JSON for Bearer clients. The refresh token is only sent in its
         cookie. Do not store the returned access token in browser local storage.
       security: []
@@ -165,7 +166,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/AccessTokenResponse"
         "401":
-          description: Refresh cookie is missing, invalid, or expired. An invalid supplied
+          description:
+            Refresh cookie is missing, invalid, or expired. An invalid supplied
             cookie also clears both authentication cookies.
           headers:
             Cache-Control:
@@ -236,7 +238,8 @@ paths:
         - Apartments
       operationId: landlordGetApartmentNested
       summary: Read an apartment
-      description: Landlord only. Uses the same visibility rules as the apartment
+      description:
+        Landlord only. Uses the same visibility rules as the apartment
         list. Archived apartments remain readable.
       responses:
         "200":
@@ -293,7 +296,8 @@ paths:
         - Apartments
       operationId: landlordArchiveApartmentNested
       summary: Archive an apartment
-      description: Landlord only. Sets `archivedAt`; deleting an already archived
+      description:
+        Landlord only. Sets `archivedAt`; deleting an already archived
         apartment returns it without changing the timestamp.
       responses:
         "200":
@@ -316,7 +320,8 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -326,7 +331,8 @@ paths:
         - Leases
       operationId: landlordListLeases
       summary: List visible leases
-      description: Landlord only. Landlords see leases for their apartments. Tenants
+      description:
+        Landlord only. Landlords see leases for their apartments. Tenants
         see leases assigned to them or linked through their payment history.
         Archived leases remain in the list.
       responses:
@@ -350,7 +356,8 @@ paths:
         - Payment periods
       operationId: landlordListPeriods
       summary: List visible lease payment periods
-      description: Landlord only. Landlords see periods for their apartments' leases.
+      description:
+        Landlord only. Landlords see periods for their apartments' leases.
         Tenants see periods for their assigned leases or linked through their
         payment history. Archived periods remain in the list.
       responses:
@@ -374,7 +381,8 @@ paths:
         - Leases
       operationId: landlordListLeasesNested
       summary: List visible leases
-      description: Landlord only. Landlords see leases for their apartments. Tenants
+      description:
+        Landlord only. Landlords see leases for their apartments. Tenants
         see leases assigned to them or linked through their payment history.
         Archived leases remain in the list.
       responses:
@@ -397,7 +405,8 @@ paths:
         - Leases
       operationId: landlordCreateLeaseNested
       summary: Create a lease
-      description: Landlord only. Tenants must be registered and available. Lease
+      description:
+        Landlord only. Tenants must be registered and available. Lease
         dates cannot overlap another lease for the apartment.
       requestBody:
         required: true
@@ -430,7 +439,8 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -440,7 +450,8 @@ paths:
         - Leases
       operationId: landlordGetLeaseNested
       summary: Read a lease
-      description: Landlord only. Uses the same visibility rules as the lease list.
+      description:
+        Landlord only. Uses the same visibility rules as the lease list.
         Archived leases remain readable.
       responses:
         "200":
@@ -500,7 +511,8 @@ paths:
         - Leases
       operationId: landlordArchiveLeaseNested
       summary: Archive a lease
-      description: Landlord only. Sets `archivedAt`; deleting an already archived
+      description:
+        Landlord only. Sets `archivedAt`; deleting an already archived
         lease returns it without changing the timestamp.
       responses:
         "200":
@@ -523,14 +535,16 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: lease
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -540,7 +554,8 @@ paths:
         - Payment periods
       operationId: landlordListPeriodsNested
       summary: List visible lease payment periods
-      description: Landlord only. Landlords see periods for their apartments' leases.
+      description:
+        Landlord only. Landlords see periods for their apartments' leases.
         Tenants see periods for their assigned leases or linked through their
         payment history. Archived periods remain in the list.
       responses:
@@ -563,7 +578,8 @@ paths:
         - Payment periods
       operationId: landlordCreatePeriodNested
       summary: Create a lease payment period
-      description: Landlord only. Dates must be within the active lease and cannot
+      description:
+        Landlord only. Dates must be within the active lease and cannot
         overlap another period. Creates one payment per assigned tenant,
         splitting rent as evenly as possible; `dueDate` equals `endDate`.
       requestBody:
@@ -597,14 +613,16 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: lease
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -614,7 +632,8 @@ paths:
         - Payment periods
       operationId: landlordGetPeriodNested
       summary: Read a lease payment period
-      description: Landlord only. Uses the same visibility rules as the period list.
+      description:
+        Landlord only. Uses the same visibility rules as the period list.
         Archived periods remain readable.
       responses:
         "200":
@@ -638,7 +657,8 @@ paths:
         - Payment periods
       operationId: landlordUpdatePeriodNameNested
       summary: Rename a lease payment period
-      description: Landlord only. Only `name` can be changed; dates, due date, and
+      description:
+        Landlord only. Only `name` can be changed; dates, due date, and
         tenant payment amounts stay fixed. The period and its parent lease and
         apartment must be active.
       requestBody:
@@ -673,7 +693,8 @@ paths:
         - Payment periods
       operationId: landlordArchivePeriodNested
       summary: Archive a lease payment period
-      description: Landlord only. Sets `archivedAt`; deleting an already archived
+      description:
+        Landlord only. Sets `archivedAt`; deleting an already archived
         period returns it without changing the timestamp.
       responses:
         "200":
@@ -696,21 +717,24 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: lease
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: period
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -720,7 +744,8 @@ paths:
         - Apartments
       operationId: tenantListApartments
       summary: List visible apartments
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Landlords see their apartments. Tenants see apartments linked through a
         lease assignment or payment history. Archived apartments remain in the
         list.
@@ -745,7 +770,8 @@ paths:
         - Apartments
       operationId: tenantGetApartmentNested
       summary: Read an apartment
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Uses the same visibility rules as the apartment list. Archived
         apartments remain readable.
       responses:
@@ -769,7 +795,8 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -779,7 +806,8 @@ paths:
         - Leases
       operationId: tenantListLeases
       summary: List visible leases
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Landlords see leases for their apartments. Tenants see leases assigned
         to them or linked through their payment history. Archived leases remain
         in the list.
@@ -804,7 +832,8 @@ paths:
         - Payment periods
       operationId: tenantListPeriods
       summary: List visible lease payment periods
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Landlords see periods for their apartments' leases. Tenants see periods
         for their assigned leases or linked through their payment history.
         Archived periods remain in the list.
@@ -829,7 +858,8 @@ paths:
         - Leases
       operationId: tenantListLeasesNested
       summary: List visible leases
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Landlords see leases for their apartments. Tenants see leases assigned
         to them or linked through their payment history. Archived leases remain
         in the list.
@@ -852,7 +882,8 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -862,7 +893,8 @@ paths:
         - Leases
       operationId: tenantGetLeaseNested
       summary: Read a lease
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Uses the same visibility rules as the lease list. Archived leases remain
         readable.
       responses:
@@ -886,14 +918,16 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: lease
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -903,7 +937,8 @@ paths:
         - Payment periods
       operationId: tenantListPeriodsNested
       summary: List visible lease payment periods
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Landlords see periods for their apartments' leases. Tenants see periods
         for their assigned leases or linked through their payment history.
         Archived periods remain in the list.
@@ -926,14 +961,16 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: lease
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -943,7 +980,8 @@ paths:
         - Payment periods
       operationId: tenantGetPeriodNested
       summary: Read a lease payment period
-      description: Tenant only; limited to assigned leases or own payment history.
+      description:
+        Tenant only; limited to assigned leases or own payment history.
         Uses the same visibility rules as the period list. Archived periods
         remain readable.
       responses:
@@ -967,21 +1005,24 @@ paths:
       - name: apartment
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: lease
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
       - name: period
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -990,7 +1031,8 @@ paths:
       - name: id
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -1075,7 +1117,8 @@ paths:
       - name: id
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -1123,7 +1166,8 @@ paths:
       - name: id
         in: path
         required: true
-        description: Positive decimal record ID; nested records must belong to the URL
+        description:
+          Positive decimal record ID; nested records must belong to the URL
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
@@ -1172,7 +1216,8 @@ paths:
         - Payments
       operationId: landlordListPayments
       summary: List the landlord's payments with database filters
-      description: Landlord only. All filters combine with AND and always retain the
+      description:
+        Landlord only. All filters combine with AND and always retain the
         signed-in landlord's ownership scope. Empty values are ignored. Invalid
         IDs, statuses, unknown nonempty parameters or repeated parameters return
         400. Overdue means PENDING with a period due before today's date in the
@@ -1204,7 +1249,8 @@ paths:
         - name: status
           in: query
           required: false
-          description: Display status. Overdue payments are returned with their underlying
+          description:
+            Display status. Overdue payments are returned with their underlying
             unpaid status.
           schema:
             type: string
@@ -1273,26 +1319,28 @@ components:
       required: true
       schema:
         type: string
-        pattern: '^[1-9][0-9]*$'
+        pattern: "^[1-9][0-9]*$"
       description: Positive decimal integer within JavaScript's safe integer range.
   responses:
     BadRequest:
       description: Malformed JSON or invalid path ID.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
     AuthValidationError:
-      description: Well-formed JSON with invalid authentication input. Field errors
+      description:
+        Well-formed JSON with invalid authentication input. Field errors
         are included.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/AuthErrorResponse' }
+          schema: { $ref: "#/components/schemas/AuthErrorResponse" }
     UnprocessableContent:
-      description: Well-formed JSON with invalid fields or date relationships, or an
+      description:
+        Well-formed JSON with invalid fields or date relationships, or an
         unavailable tenant reference.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
     Unauthorized:
       description: Bearer token or authentication cookie is missing or invalid.
       headers:
@@ -1303,38 +1351,38 @@ components:
             const: Bearer
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
     Forbidden:
-      description: The signed-in role does not match the API area, or a mutation has a
-        cross-origin Origin header.
+      description: The signed-in role does not match the API area.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
     NotFound:
-      description: Record, referenced tenant, or tenant profile does not exist or is
+      description:
+        Record, referenced tenant, or tenant profile does not exist or is
         outside the caller's scope.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
     Conflict:
       description: Record is archived or conflicts with existing dates or data.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
     ServerError:
       description: Unexpected record request failure.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
   schemas:
     ErrorResponse:
       type: object
-      required: [ error ]
+      required: [error]
       properties:
         error: { type: string }
     AuthErrorResponse:
       allOf:
-        - $ref: '#/components/schemas/ErrorResponse'
+        - $ref: "#/components/schemas/ErrorResponse"
         - type: object
           properties:
             fields:
@@ -1344,53 +1392,59 @@ components:
                 items: { type: string }
     SuccessResponse:
       type: object
-      required: [ success ]
+      required: [success]
       properties:
         success: { type: boolean, const: true }
     AccessTokenResponse:
       type: object
-      required: [ success, access_token, token_type, expires_in ]
+      required: [success, access_token, token_type, expires_in]
       properties:
         success: { type: boolean, const: true }
         access_token:
           {
             type: string,
             minLength: 1,
-            description: Signed token to use in the Authorization Bearer header.
+            description: Signed token to use in the Authorization Bearer header.,
           }
         token_type: { type: string, const: Bearer }
-        expires_in: { type: integer, const: 900, description: Access token lifetime in seconds. }
+        expires_in:
+          {
+            type: integer,
+            const: 900,
+            description: Access token lifetime in seconds.,
+          }
     AuthTokenPayload:
       type: object
-      description: Claims stored in the signed access token, which is also sent in the
+      description:
+        Claims stored in the signed access token, which is also sent in the
         `auth` cookie. This payload is not returned separately by any API
         response.
       additionalProperties: false
-      required: [ user, iat, exp ]
+      required: [user, iat, exp]
       properties:
         user:
           type: object
           additionalProperties: false
-          required: [ id, email, role ]
+          required: [id, email, role]
           properties:
             id: { type: integer, description: Database user ID. }
             email: { type: string, format: email }
-            role: { type: string, enum: [ LANDLORD, TENANT ] }
+            role: { type: string, enum: [LANDLORD, TENANT] }
         iat: { type: integer, description: Issued-at time as Unix seconds. }
         exp:
           {
             type: integer,
-            description: Expiration time as Unix seconds; normally iat + 900.
+            description: Expiration time as Unix seconds; normally iat + 900.,
           }
     LoginInput:
       type: object
-      required: [ email, password ]
+      required: [email, password]
       properties:
         email: { type: string, format: email, minLength: 1 }
         password: { type: string, minLength: 1 }
     RegisterInput:
       type: object
-      required: [ name, phoneNumber, email, password ]
+      required: [name, phoneNumber, email, password]
       properties:
         name: { type: string, minLength: 2 }
         phoneNumber: { type: string, minLength: 1 }
@@ -1398,33 +1452,33 @@ components:
         password: { type: string, minLength: 8 }
     RecordId:
       type: string
-      pattern: '^[1-9][0-9]*$'
+      pattern: "^[1-9][0-9]*$"
       description: Positive decimal integer within JavaScript's safe integer range.
     ApartmentInput:
       type: object
       additionalProperties: false
-      required: [ name, address ]
+      required: [name, address]
       properties:
         name:
           {
             type: string,
             minLength: 1,
-            description: Trimmed; whitespace-only values are rejected.
+            description: Trimmed; whitespace-only values are rejected.,
           }
         address:
           {
             type: string,
             minLength: 1,
-            description: Trimmed; whitespace-only values are rejected.
+            description: Trimmed; whitespace-only values are rejected.,
           }
     Apartment:
       type: object
-      required: [ id, name, address, archivedAt ]
+      required: [id, name, address, archivedAt]
       properties:
-        id: { $ref: '#/components/schemas/RecordId' }
+        id: { $ref: "#/components/schemas/RecordId" }
         name: { type: string }
         address: { type: string }
-        archivedAt: { type: [ string, 'null' ], format: date-time }
+        archivedAt: { type: [string, "null"], format: date-time }
     LeaseInput:
       type: object
       additionalProperties: false
@@ -1436,8 +1490,8 @@ components:
       properties:
         apartmentId:
           {
-            $ref: '#/components/schemas/RecordId',
-            description: "Optional; if supplied, must match the parent ID in the URL."
+            $ref: "#/components/schemas/RecordId",
+            description: "Optional; if supplied, must match the parent ID in the URL.",
           }
         startDate: { type: string, format: date }
         endDate: { type: string, format: date }
@@ -1449,7 +1503,7 @@ components:
         tenantIds:
           type: array
           minItems: 1
-          items: { $ref: '#/components/schemas/RecordId' }
+          items: { $ref: "#/components/schemas/RecordId" }
     Lease:
       type: object
       required:
@@ -1461,24 +1515,24 @@ components:
           status,
           totalRentCents,
           tenantIds,
-          archivedAt
+          archivedAt,
         ]
       properties:
-        id: { $ref: '#/components/schemas/RecordId' }
-        apartmentId: { $ref: '#/components/schemas/RecordId' }
+        id: { $ref: "#/components/schemas/RecordId" }
+        apartmentId: { $ref: "#/components/schemas/RecordId" }
         startDate: { type: string, format: date }
         endDate: { type: string, format: date }
         status:
           {
             type: string,
-            enum: [ upcoming, active, ended ],
-            description: Computed from the lease dates.
+            enum: [upcoming, active, ended],
+            description: Computed from the lease dates.,
           }
         totalRentCents: { type: integer, description: Total rent in cents. }
         tenantIds:
           type: array
-          items: { $ref: '#/components/schemas/RecordId' }
-        archivedAt: { type: [ string, 'null' ], format: date-time }
+          items: { $ref: "#/components/schemas/RecordId" }
+        archivedAt: { type: [string, "null"], format: date-time }
     PeriodInput:
       type: object
       additionalProperties: false
@@ -1489,75 +1543,75 @@ components:
       properties:
         leaseId:
           {
-            $ref: '#/components/schemas/RecordId',
-            description: "Optional; if supplied, must match the parent ID in the URL."
+            $ref: "#/components/schemas/RecordId",
+            description: "Optional; if supplied, must match the parent ID in the URL.",
           }
         name:
           {
             type: string,
             minLength: 1,
-            description: Trimmed; whitespace-only values are rejected.
+            description: Trimmed; whitespace-only values are rejected.,
           }
         startDate: { type: string, format: date }
         endDate: { type: string, format: date }
     PeriodNameInput:
       type: object
       additionalProperties: false
-      required: [ name ]
+      required: [name]
       properties:
         name:
           {
             type: string,
             minLength: 1,
-            description: Trimmed; whitespace-only values are rejected.
+            description: Trimmed; whitespace-only values are rejected.,
           }
     PaymentPeriod:
       type: object
-      required: [ id, leaseId, name, startDate, endDate, dueDate, archivedAt ]
+      required: [id, leaseId, name, startDate, endDate, dueDate, archivedAt]
       properties:
-        id: { $ref: '#/components/schemas/RecordId' }
-        leaseId: { $ref: '#/components/schemas/RecordId' }
+        id: { $ref: "#/components/schemas/RecordId" }
+        leaseId: { $ref: "#/components/schemas/RecordId" }
         name: { type: string }
         startDate: { type: string, format: date }
         endDate: { type: string, format: date }
         dueDate: { type: string, format: date }
-        archivedAt: { type: [ string, 'null' ], format: date-time }
+        archivedAt: { type: [string, "null"], format: date-time }
     ApartmentResponse:
       type: object
-      required: [ data ]
+      required: [data]
       properties:
-        data: { $ref: '#/components/schemas/Apartment' }
+        data: { $ref: "#/components/schemas/Apartment" }
     ApartmentListResponse:
       type: object
-      required: [ data ]
+      required: [data]
       properties:
         data:
           type: array
-          items: { $ref: '#/components/schemas/Apartment' }
+          items: { $ref: "#/components/schemas/Apartment" }
     LeaseResponse:
       type: object
-      required: [ data ]
+      required: [data]
       properties:
-        data: { $ref: '#/components/schemas/Lease' }
+        data: { $ref: "#/components/schemas/Lease" }
     LeaseListResponse:
       type: object
-      required: [ data ]
+      required: [data]
       properties:
         data:
           type: array
-          items: { $ref: '#/components/schemas/Lease' }
+          items: { $ref: "#/components/schemas/Lease" }
     PeriodResponse:
       type: object
-      required: [ data ]
+      required: [data]
       properties:
-        data: { $ref: '#/components/schemas/PaymentPeriod' }
+        data: { $ref: "#/components/schemas/PaymentPeriod" }
     PeriodListResponse:
       type: object
-      required: [ data ]
+      required: [data]
       properties:
         data:
           type: array
-          items: { $ref: '#/components/schemas/PaymentPeriod' }
+          items: { $ref: "#/components/schemas/PaymentPeriod" }
     TenantPayment:
       type: object
       required:

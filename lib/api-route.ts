@@ -1,6 +1,5 @@
 import "server-only";
 
-import { revalidatePath } from "next/cache";
 import auth from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
 import type { UserRole } from "@/lib/generated/prisma/browser";
@@ -40,12 +39,6 @@ export function roleRoute(
           `Only ${role === "LANDLORD" ? "landlords" : "tenants"} can do that.`,
           403,
         );
-
-      const mutation = !["GET", "HEAD", "OPTIONS"].includes(request.method);
-      const origin = request.headers.get("origin");
-      if (mutation && origin && origin !== new URL(request.url).origin) {
-        return errorResponse("Cross-origin requests are not allowed.", 403);
-      }
 
       const params = await context.params;
       if (
