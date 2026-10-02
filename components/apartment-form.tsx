@@ -13,7 +13,7 @@ import {
 } from "@/lib/apartment-schema";
 import { landlordRoutes } from "@/lib/routes";
 import type { Apartment } from "@/lib/types";
-import { apiPath, apiRequest } from "@/lib/api-client";
+import { landlordApi, apiRequest } from "@/lib/api-client";
 import { useReloadAppData } from "@/components/data-provider";
 import { useState } from "react";
 
@@ -36,7 +36,7 @@ export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
   async function onSubmit(values: ApartmentFormValues) {
     setServerError("");
     try {
-      const saved = await apiRequest<Apartment>(apiPath("apartments", apartment?.id), apartment ? "PUT" : "POST", values);
+      const saved = await apiRequest<Apartment>(landlordApi.apartments(apartment?.id), apartment ? "PUT" : "POST", values);
       const destination = landlordRoutes.apartment(saved.id);
       try { await reload(); router.push(destination); }
       catch { window.location.assign(destination); }

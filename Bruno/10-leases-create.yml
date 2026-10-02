@@ -1,11 +1,11 @@
 info:
   name: "Sutartys: POST → 201"
   type: http
-  seq: 9
+  seq: 10
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/leases"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases"
   headers:
     - name: Content-Type
       value: application/json
@@ -13,7 +13,6 @@ http:
     type: json
     data: |-
       {
-        "apartmentId": "{{apartmentId}}",
         "startDate": "2027-01-01",
         "endDate": "2027-12-31",
         "rentalPrice": 120000,
@@ -28,10 +27,11 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: if (res.status === 201 && res.body?.data?.id) bru.setVar("leaseId", res.body.data.id);
+      code: if (res.status === 201 && res.body?.data?.id) bru.setVar("leaseId",
+        res.body.data.id);
     - type: tests
       code: |-
-        test("POST /api/leases → 201", function () {
+        test("POST /api/landlord/apartments/{{apartmentId}}/leases → 201", function () {
           expect(res.status).to.equal(201);
         });
 
@@ -43,6 +43,10 @@ runtime:
           expect(res.body.data).to.have.property("endDate");
           expect(res.body.data).to.have.property("tenantIds");
           expect(res.body.data).to.have.property("archivedAt");
+        });
+
+        test("Sutartis priklauso URL nurodytam butui", function () {
+          expect(res.body.data.apartmentId).to.equal(bru.getVar("apartmentId"));
         });
 
 settings:

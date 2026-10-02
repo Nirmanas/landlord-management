@@ -1,11 +1,13 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
+import { useAppData, useApiResource } from "@/components/data-provider";
 import { ConfirmPaymentButton } from "@/components/action-buttons";
 
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { TenantPayment } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/form-controls";
 import {
@@ -14,7 +16,7 @@ import {
   PageHeader,
   PaymentBadge,
 } from "@/components/shared";
-import { formatCurrency, formatDate, isOverdue } from "@/lib/domain";
+import { formatCurrency, formatDate } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 
@@ -25,35 +27,24 @@ const tdClass = "border-b border-border px-4 py-4 text-soft-foreground";
 
 export default function Page() {
   const data = useAppData();
-  const [filters, setFilters] = useState({
-    apartment: "",
-    lease: "",
-    tenant: "",
-    period: "",
-    status: "",
-  });
-  const rows = useMemo(
-    () =>
-      data.tenantPayments.filter((payment) => {
-        const lease = data.leases.find((l) => l.id === payment.leaseId);
-        const period = data.paymentPeriods.find(
-          (p) => p.id === payment.paymentPeriodId,
-        );
-        const displayStatus = isOverdue(payment, period)
-          ? "overdue"
-          : payment.status;
-        return (
-          (!filters.apartment || lease?.apartmentId === filters.apartment) &&
-          (!filters.lease || payment.leaseId === filters.lease) &&
-          (!filters.tenant || payment.tenantId === filters.tenant) &&
-          (!filters.period || payment.paymentPeriodId === filters.period) &&
-          (!filters.status || displayStatus === filters.status)
-        );
-      }),
-    [data, filters],
-  );
-  const set = (key: keyof typeof filters, value: string) =>
-    setFilters((current) => ({ ...current, [key]: value }));
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const filters = {
+    apartment: searchParams.get("apartment") ?? "",
+    lease: searchParams.get("lease") ?? "",
+    tenant: searchParams.get("tenant") ?? "",
+    period: searchParams.get("period") ?? "",
+    status: searchParams.get("status") ?? "",
+  };
+  const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value !== ""));
+  const { data: payments, loading, error, reload } = useApiResource<TenantPayment[]>(`/api/landlord/payments${query.size ? `?${query}` : ""}`);
+  const rows = payments ?? [];
+  const set = (key: keyof typeof filters, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set(key, value);
+    else params.delete(key);
+    router.replace(`/landlord/payments${params.size ? `?${params}` : ""}`, { scroll: false });
+  };
   return (
     <div className="space-y-6">
       <PageHeader
@@ -124,7 +115,12 @@ export default function Page() {
           </Select>
         </CardContent>
       </Card>
-      {rows.length ? (
+      {loading ? <p role="status">Loading payments…</p> : error ? (
+        <div role="alert" className="space-y-3">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button type="button" variant="outline" onClick={reload}>Retry</Button>
+        </div>
+      ) : rows.length ? (
         <Card>
           <CardContent className="overflow-x-auto p-0">
             <table className={tableClass}>
@@ -191,7 +187,7 @@ export default function Page() {
                           >
                             View period
                           </Link>
-                        )}{payment.status === "pending" && <ConfirmPaymentButton id={payment.id} />}</div>
+                        )}{payment.status === "pending" && <ConfirmPaymentButton id={payment.id} payment={payment} onConfirmed={reload} />}</div>
                       </td>
                     </tr>
                   );
@@ -203,12 +199,12 @@ export default function Page() {
       ) : (
         <EmptyState
           title={
-            data.tenantPayments.length
+            query.size
               ? "No matching payments"
               : "No payments yet"
           }
           description={
-            data.tenantPayments.length
+            query.size
               ? "Try clearing one or more filters."
               : "Create a lease and payment period to generate tenant payments."
           }

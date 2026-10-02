@@ -1,11 +1,12 @@
 info:
   name: "Laikotarpiai: PUT įrašą → 201"
   type: http
-  seq: 18
+  seq: 19
 
 http:
   method: PUT
-  url: "{{baseUrl}}/api/periods/{{periodId}}"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/pe\
+    riods/{{periodId}}"
   headers:
     - name: Content-Type
       value: application/json
@@ -23,13 +24,17 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("PUT /api/periods/{{periodId}} → 201", function () {
+        test("PUT /api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/periods/{{periodId}} → 201", function () {
           expect(res.status).to.equal(201);
         });
 
         test("Grąžintas tinkamas įrašas", function () {
           expect(res.body.data.id).to.equal(bru.getVar("periodId"));
           expect(res.body.data.name).to.equal("2027 sausis (pakeista)");
+        });
+
+        test("Laikotarpis priklauso URL nurodytai sutarčiai", function () {
+          expect(res.body.data.leaseId).to.equal(bru.getVar("leaseId"));
         });
 
 settings:

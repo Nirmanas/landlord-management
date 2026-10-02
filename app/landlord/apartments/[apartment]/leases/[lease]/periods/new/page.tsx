@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppData, useReloadAppData } from "@/components/data-provider";
-import { apiPath, apiRequest } from "@/lib/api-client";
+import { landlordApi, apiRequest } from "@/lib/api-client";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/form-controls";
@@ -22,7 +22,7 @@ function PeriodForm({ lease }: { lease: Lease }) {
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const saved = await apiRequest<PaymentPeriod>(apiPath("periods"), "POST", { leaseId: lease.id, name, startDate, endDate });
+      const saved = await apiRequest<PaymentPeriod>(landlordApi.periods(lease.apartmentId, lease.id), "POST", { name, startDate, endDate });
       const destination = landlordRoutes.period(lease.apartmentId, lease.id, saved.id);
       try { await reload(); router.push(destination); router.refresh(); }
       catch { window.location.assign(destination); }

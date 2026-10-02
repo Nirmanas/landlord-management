@@ -1,0 +1,46 @@
+info:
+  name: "Nuomininkas: prisijungimas → 201"
+  type: http
+  seq: 25
+http:
+  method: POST
+  url: "{{baseUrl}}/api/auth/login"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{tenantEmail}}",
+        "password": "{{tenantPassword}}"
+      }
+  auth:
+    type: none
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        bru.setVar("tenantAccessToken", "");
+        if (!bru.getEnvVar("tenantEmail") || !bru.getEnvVar("tenantPassword")) {
+          bru.runner.skipRequest();
+        }
+    - type: after-response
+      code: |-
+        if (res.status === 201 && res.body?.access_token) bru.setVar("tenantAccessToken", res.body.access_token);
+    - type: tests
+      code: |-
+        test("POST /api/auth/login → 201", function () {
+          expect(res.status).to.equal(201);
+        });
+
+        test("Nuomininko prieigos žetonas", function () {
+          expect(res.body.access_token).to.be.a("string").and.not.empty;
+          expect(res.body.expires_in).to.equal(900);
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

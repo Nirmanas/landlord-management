@@ -17,16 +17,24 @@ config:
 request:
   auth:
     type: bearer
-    token: ""
+    token: "{{accessToken}}"
   variables:
     - name: baseUrl
       value: https://saitynai.nirmanas.dev
     - name: accessToken
       value: ""
     - name: apartmentId
-      value: "1"
+      value: ""
     - name: tenantId
       value: "2"
+    - name: tenantAccessToken
+      value: ""
+    - name: leaseId
+      value: ""
+    - name: periodId
+      value: ""
+    - name: reportedPaymentId
+      value: ""
 bundled: false
 extensions:
   bruno:

@@ -1,11 +1,11 @@
 info:
   name: "Sutartys: PUT įrašą → 201"
   type: http
-  seq: 12
+  seq: 13
 
 http:
   method: PUT
-  url: "{{baseUrl}}/api/leases/{{leaseId}}"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}"
   headers:
     - name: Content-Type
       value: application/json
@@ -13,7 +13,6 @@ http:
     type: json
     data: |-
       {
-        "apartmentId": "{{apartmentId}}",
         "startDate": "2027-01-01",
         "endDate": "2027-12-31",
         "rentalPrice": 130000,
@@ -29,13 +28,17 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("PUT /api/leases/{{leaseId}} → 201", function () {
+        test("PUT /api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}} → 201", function () {
           expect(res.status).to.equal(201);
         });
 
         test("Grąžintas tinkamas įrašas", function () {
           expect(res.body.data.id).to.equal(bru.getVar("leaseId"));
           expect(res.body.data.totalRentCents).to.equal(130000);
+        });
+
+        test("Sutartis priklauso URL nurodytam butui", function () {
+          expect(res.body.data.apartmentId).to.equal(bru.getVar("apartmentId"));
         });
 
 settings:

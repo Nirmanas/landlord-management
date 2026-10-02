@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppData, useApiItem } from "@/components/data-provider";
+import { useAppData, useApiItem, useApiCollection } from "@/components/data-provider";
 import {
   ArchiveButton,
   ConfirmPaymentButton,
@@ -32,9 +32,11 @@ export default function Page() {
     lease: string;
   }>();
   const data = useAppData();
-  const { data: lease, loading, error } = useApiItem("leases", leaseId);
+  const { data: lease, loading, error } = useApiItem("leases", leaseId, apartmentId);
+  const { data: periodRecords, loading: periodsLoading, error: periodsError } = useApiCollection("periods", apartmentId, leaseId);
   const apartment = data.apartments.find((item) => item.id === apartmentId);
-  if (loading) return <p role="status">Loading lease…</p>;
+  if (loading || periodsLoading) return <p role="status">Loading lease…</p>;
+  if (periodsError) return <p role="alert">{periodsError}</p>;
   if (error && !lease) return <p role="alert">{error}</p>;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
@@ -43,7 +45,7 @@ export default function Page() {
       <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />
     );
   const archivedLease = Boolean(lease.archivedAt || apartment.archivedAt);
-  const periods = data.paymentPeriods
+  const periods = (periodRecords ?? [])
     .filter(
       (p) =>
         p.leaseId === leaseId &&
@@ -76,6 +78,7 @@ export default function Page() {
             <ArchiveButton
               kind="lease"
               id={leaseId}
+              apartmentId={apartmentId}
               destination={landlordRoutes.leases(apartmentId)}
             />
           )}

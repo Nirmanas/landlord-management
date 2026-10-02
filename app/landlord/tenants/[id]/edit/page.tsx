@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { saveTenant } from "@/app/actions";
+import { apiRequest } from "@/lib/api-client";
 import { useAppData } from "@/components/data-provider";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,10 +18,12 @@ function TenantForm({ tenant }: { tenant: Tenant }) {
   const [busy, setBusy] = useState(false);
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
-    const result = await saveTenant(tenant.id, { name, phoneNumber });
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    router.push(`/landlord/tenants/${tenant.id}`); router.refresh();
+    try {
+      await apiRequest(`/api/landlord/tenants/${encodeURIComponent(tenant.id)}`, "PUT", { name, phoneNumber });
+      router.push(`/landlord/tenants/${tenant.id}`); router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The request failed.");
+    } finally { setBusy(false); }
   }
   return <form onSubmit={submit} className="space-y-5">
     <Card><CardHeader><CardTitle>Tenant information</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">

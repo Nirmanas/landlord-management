@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
+import { useAppData, useApiCollection } from "@/components/data-provider";
 import { useState } from "react";
 
 
@@ -22,10 +22,13 @@ export default function Page() {
   const [archived, setArchived] = useState(false);
   const { apartment: apartmentId } = useParams<{ apartment: string }>();
   const data = useAppData();
+  const { data: records, loading, error } = useApiCollection("leases", apartmentId);
+  if (loading) return <p role="status">Loading leases…</p>;
+  if (error) return <p role="alert">{error}</p>;
   const apartment = data.apartments.find((item) => item.id === apartmentId);
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  const leases = data.leases.filter((lease) => lease.apartmentId === apartmentId && Boolean(lease.archivedAt || apartment.archivedAt) === archived);
+  const leases = (records ?? []).filter((lease) => Boolean(lease.archivedAt || apartment.archivedAt) === archived);
   return (
     <div className="space-y-6">
       <BackLink href={landlordRoutes.apartment(apartmentId)}>{apartment.name}</BackLink>

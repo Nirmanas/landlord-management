@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppData, useReloadAppData } from "@/components/data-provider";
-import { apiPath, apiRequest } from "@/lib/api-client";
+import { landlordApi, apiRequest } from "@/lib/api-client";
 import { formatCurrency, splitRent, tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
 import type { Apartment, Lease } from "@/lib/types";
@@ -34,7 +34,7 @@ export function LeaseForm({ apartment, lease }: { apartment: Apartment; lease?: 
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const saved = await apiRequest<Lease>(apiPath("leases", lease?.id), lease ? "PUT" : "POST", { apartmentId: apartment.id, startDate, endDate, rentalPrice: cents, tenantIds });
+      const saved = await apiRequest<Lease>(landlordApi.leases(apartment.id, lease?.id), lease ? "PUT" : "POST", { startDate, endDate, rentalPrice: cents, tenantIds });
       const destination = landlordRoutes.lease(apartment.id, saved.id);
       try { await reload(); router.push(destination); }
       catch { window.location.assign(destination); }

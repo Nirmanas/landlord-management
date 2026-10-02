@@ -1,0 +1,49 @@
+info:
+  name: "Nuomotojas: prisijungimas → 201"
+  type: http
+  seq: 1
+http:
+  method: POST
+  url: "{{baseUrl}}/api/auth/login"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{landlordEmail}}",
+        "password": "{{landlordPassword}}"
+      }
+  auth:
+    type: none
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        bru.setVar("accessToken", "");
+        bru.setVar("tenantAccessToken", "");
+        bru.setVar("apartmentId", "");
+        bru.setVar("leaseId", "");
+        bru.setVar("periodId", "");
+        bru.setVar("reportedPaymentId", "");
+    - type: after-response
+      code: if (res.status === 201 && res.body?.access_token)
+        bru.setVar("accessToken", res.body.access_token);
+    - type: tests
+      code: |-
+        test("POST /api/auth/login → 201", function () {
+          expect(res.status).to.equal(201);
+        });
+
+        test("Prieigos žetonas galioja 15 minučių", function () {
+          expect(res.body.access_token).to.be.a("string").and.not.empty;
+          expect(res.body.token_type).to.equal("Bearer");
+          expect(res.body.expires_in).to.equal(900);
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

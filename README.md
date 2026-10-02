@@ -1,42 +1,42 @@
 # LandLordMan
 
-LandLordMan – nuomos valdymo programa su atskirais nuomotojų ir nuomininkų puslapiais. Nuomotojai gali tvarkyti butus, nuomos sutartis, mokėjimo laikotarpius ir nuomininkus. Nuomininkai gali peržiūrėti savo nuomos sutartis ir mokėjimų informaciją.
+LandLordMan – nuomos valdymo programa su atskirais nuomotojų ir nuomininkų puslapiais. Nuomotojai tvarko butus, nuomos sutartis, mokėjimo laikotarpius ir nuomininkus. Nuomininkai peržiūri savo sutartis ir praneša apie išsiųstus mokėjimus.
 
 ## HTTP API
 
-API pasiekiama adresais, prasidedančiais `/api`. Išsami kompiuteriu apdorojama specifikacija su schemomis ir atsakymų kodais pateikta faile [openapi.yaml](openapi.yaml).
+Duomenys keičiami per aiškius HTTP API maršrutus; Server Actions nenaudojami. Išsami specifikacija su schemomis ir atsakymų kodais pateikta [openapi.yaml](openapi.yaml).
 
-### Autentifikavimas ir duomenų formatas
+`POST /api/auth/login` grąžina 15 minučių `access_token` ir nustato HttpOnly `auth` bei septynių dienų `refresh` slapukus. API klientas gali siųsti `Authorization: Bearer <access_token>`; naršyklė automatiškai siunčia slapukus. Pateikta `Authorization` antraštė turi pirmenybę prieš `auth` slapuką. `POST /api/auth/refresh` rotuoja atnaujinimo žetoną, o `DELETE /api/auth/login` atšaukia atnaujinimo sesiją ir pašalina abu slapukus.
 
-`POST /api/auth/login` grąžina `access_token` ir nustato HttpOnly slapuką `auth`. API klientas žetoną gali siųsti antraštėje `Authorization: Bearer <access_token>`; naršyklė gali automatiškai siųsti slapuką. Jei pateikta `Authorization` antraštė, ji turi pirmenybę prieš slapuką. Žetonai galioja 24 valandas. `DELETE /api/auth/login` pašalina slapuką, tačiau anksčiau išduotas Bearer žetonas lieka galioti iki jo galiojimo pabaigos.
-
-Norint naudoti butų, nuomos sutarčių ir mokėjimo laikotarpių API maršrutus, reikia prisijungti. Nuomotojai gali kurti, keisti ir archyvuoti jiems priklausančius įrašus. Nuomininkai gali skaityti įrašus, susietus su jų nuomos sutartimis arba mokėjimų istorija. ID URL kelyje ir JSON turinyje pateikiami kaip teigiamų dešimtainių skaičių **eilutės** (pavyzdžiui, `"12"`); datos pateikiamos `YYYY-MM-DD` formato eilutėmis. Siųsdami JSON turinį nurodykite `Content-Type: application/json`.
-
-Sėkmingos užklausos dėl vieno įrašo grąžina `{ "data": ... }`, o sąrašų užklausos – `{ "data": [...] }`. Klaidos grąžina `{ "error": "..." }`. Jei neteisingi autentifikavimo duomenų laukai, atsakyme taip pat būna objektas `fields`. Dažniausi būsenos kodai: `400` (neteisingas JSON arba ID URL kelyje), `401` (reikia prisijungti arba neteisingi prisijungimo duomenys), `403` (reikalingos nuomotojo teisės), `404` (įrašas nerastas arba nepasiekiamas šiam naudotojui), `409` (dubliuojamas, archyvuotas arba su kitu įrašu persidengiantis įrašas), `422` (neteisingi duomenys) ir `500` (serverio klaida).
+Nuomotojo API prasideda `/api/landlord`, nuomininko – `/api/tenant`. Kiekvienas maršrutas tikrina prisijungimą ir atitinkamą rolę. Nuomotojas pasiekia savo butus ir jų įrašus, nuomininkas – įrašus, susietus su jo sutartimis ar mokėjimų istorija. Nuomininkų kontaktų katalogas prieinamas nuomotojams. Įdėtiniuose URL sutartis turi priklausyti nurodytam butui, o laikotarpis – nurodytai sutarčiai; neatitinkantys arba neprieinami įrašai grąžina `404`.
 
 ### API maršrutai
 
-| Metodas | Adresas | Prieiga | Užklausos turinys / veiksmas |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | Visiems | `{ "name": string, "phoneNumber": string, "email": string, "password": string }`; slaptažodį turi sudaryti bent 8 simboliai. Grąžina `201 { "success": true }`. Užsiregistravus automatiškai neprisijungiama. |
-| `POST` | `/api/auth/login` | Visiems | `{ "email": string, "password": string }`. Grąžina `{ "success": true, "access_token": string, "token_type": "Bearer", "expires_in": 86400 }`. |
-| `DELETE` | `/api/auth/login` | Visiems | Atsijungia pašalindamas slapuką `auth`; grąžina `{ "success": true }`. |
-| `GET` | `/api/apartments` | Nuomotojui arba nuomininkui | Pateikia pasiekiamų butų sąrašą. |
-| `POST` | `/api/apartments` | Nuomotojui | Sukuria butą pagal `{ "name": string, "address": string }`; grąžina `201`. |
-| `GET` | `/api/apartments/{id}` | Nuomotojui arba nuomininkui | Pateikia vieną pasiekiamą butą. |
-| `PUT` | `/api/apartments/{id}` | Buto savininkui | Pakeičia pavadinimą ir adresą; turinys toks pat kaip `POST` užklausoje. |
-| `DELETE` | `/api/apartments/{id}` | Buto savininkui | Archyvuoja butą; grąžina įrašą su užpildytu `archivedAt`. |
-| `GET` | `/api/leases` | Nuomotojui arba nuomininkui | Pateikia pasiekiamų nuomos sutarčių sąrašą. |
-| `POST` | `/api/leases` | Nuomotojui | Sukuria nuomos sutartį pagal `{ "apartmentId": string, "startDate": string, "endDate": string, "rentalPrice": number, "tenantIds": string[] }`; grąžina `201`. |
-| `GET` | `/api/leases/{id}` | Nuomotojui arba nuomininkui | Pateikia vieną pasiekiamą nuomos sutartį. |
-| `PUT` | `/api/leases/{id}` | Buto savininkui | Atnaujina sutartį; reikia tokio pat viso turinio kaip `POST` užklausoje. Sutarties negalima perkelti į kitą butą. |
-| `DELETE` | `/api/leases/{id}` | Buto savininkui | Archyvuoja nuomos sutartį. |
-| `GET` | `/api/periods` | Nuomotojui arba nuomininkui | Pateikia pasiekiamų mokėjimo laikotarpių sąrašą. |
-| `POST` | `/api/periods` | Nuomotojui | Sukuria laikotarpį pagal `{ "leaseId": string, "name": string, "startDate": string, "endDate": string }`; grąžina `201`. |
-| `GET` | `/api/periods/{id}` | Nuomotojui arba nuomininkui | Pateikia vieną pasiekiamą mokėjimo laikotarpį. |
-| `PUT` | `/api/periods/{id}` | Buto savininkui | Pakeičia laikotarpio pavadinimą pagal `{ "name": string }`. |
-| `DELETE` | `/api/periods/{id}` | Buto savininkui | Archyvuoja mokėjimo laikotarpį. |
+Toliau `{area}` reiškia `landlord` arba `tenant`; GET užklausoms reikia atitinkamos rolės. POST, PUT ir DELETE duomenų maršrutai prieinami tik nuomotojo srityje, išskyrus atskirai nurodytą mokėjimo pranešimą.
 
-Butų atsakymuose pateikiami laukai `id`, `name`, `address` ir `archivedAt`. Nuomos sutarčių atsakymuose pateikiami `id`, `apartmentId`, `startDate`, `endDate`, pagal datas apskaičiuojamas `status` (`upcoming`, `active` arba `ended`), `totalRentCents`, `tenantIds` ir `archivedAt`. Mokėjimo laikotarpių atsakymuose pateikiami `id`, `leaseId`, `name`, `startDate`, `endDate`, `dueDate` ir `archivedAt`. Nearchyvuotų įrašų `archivedAt` reikšmė yra `null`, o archyvuotų – ISO formato laiko žyma. Archyvuotus įrašus ir toliau galima skaityti.
+| Metodas | Adresas | Veiksmas |
+| --- | --- | --- |
+| POST | `/api/auth/register` | Registracija: `{ name, phoneNumber, email, password }`. |
+| POST | `/api/auth/login` | Prisijungimas: `{ email, password }`. |
+| POST | `/api/auth/refresh` | Prieigos žetono atnaujinimas naudojant `refresh` slapuką. |
+| DELETE | `/api/auth/login` | Atsijungimas. |
+| GET, POST | `/api/{area}/apartments` | Butų sąrašas arba naujas butas: `{ name, address }`. |
+| GET, PUT, DELETE | `/api/{area}/apartments/{apartment}` | Buto peržiūra, atnaujinimas arba archyvavimas. |
+| GET | `/api/{area}/leases` | Visų pasiekiamų sutarčių sąrašas suvestinėms. |
+| GET, POST | `/api/{area}/apartments/{apartment}/leases` | Konkretaus buto sutartys; kūrimas: `{ startDate, endDate, rentalPrice, tenantIds }`. |
+| GET, PUT, DELETE | `/api/{area}/apartments/{apartment}/leases/{lease}` | Sutarties peržiūra, atnaujinimas arba archyvavimas. |
+| GET | `/api/{area}/periods` | Visų pasiekiamų laikotarpių sąrašas suvestinėms. |
+| GET, POST | `/api/{area}/apartments/{apartment}/leases/{lease}/periods` | Sutarties laikotarpiai; kūrimas: `{ name, startDate, endDate }`. |
+| GET, PUT, DELETE | `/api/{area}/apartments/{apartment}/leases/{lease}/periods/{period}` | Laikotarpio peržiūra, pavadinimo pakeitimas (`{ name }`) arba archyvavimas. |
+| PUT, DELETE | `/api/landlord/tenants/{id}` | Kontakto pakeitimas (`{ name, phoneNumber }`) arba nuomininko archyvavimas. |
+| GET | `/api/landlord/payments` | Nuomotojo mokėjimai; filtrai URL užklausos parametruose `apartment`, `lease`, `tenant`, `period`, `status`. |
+| POST | `/api/tenant/payments/{id}/report` | Savo neapmokėto arba nepavykusio mokėjimo pranešimas; būsena tampa `pending`. |
+| POST | `/api/landlord/payments/{id}/confirm` | Savo buto mokėjimo gavimo patvirtinimas; `pending` būsena tampa `confirmed`. |
 
-Nuomos sutarties `rentalPrice` reikšmė yra teigiamas sveikasis skaičius **centais**. Sutarčiai reikia bent vieno užregistruoto, prieinamo nuomininko; jos datos negali persidengti su kita to paties buto sutartimi. Laikotarpio datos turi patekti į sutarties laikotarpį ir negali persidengti su kitu mokėjimo laikotarpiu. Sukūrus laikotarpį, `dueDate` nustatoma lygi `endDate`, o kiekvienam priskirtam nuomininkui sukuriamas mokėjimas, kuo tolygiau padalijant nuomos sumą. Atnaujinant laikotarpį keičiamas tik jo pavadinimas.
+ID pateikiami kaip teigiamų dešimtainių skaičių eilutės (pvz., `"12"`), datos – `YYYY-MM-DD`. Kuriant sutartį ar laikotarpį, tėvinį įrašą nurodo URL; neprivalomi JSON `apartmentId` arba `leaseId` turi sutapti su URL. Sutarties negalima perkelti į kitą butą. JSON užklausoms nurodykite `Content-Type: application/json`. Naršyklės keitimo užklausų `Origin` turi sutapti su API adresu.
+
+Įrašų atsakymai naudoja `{ "data": ... }`, sąrašai – `{ "data": [...] }`, klaidos – `{ "error": "..." }`. Dažniausi kodai: `400` (blogas JSON ar URL ID), `401` (neprisijungta), `403` (netinkama rolė), `404` (įrašas neprieinamas), `409` (archyvuotas įrašas ar netinkama būsena), `422` (blogi laukai), `500` (serverio klaida). DELETE archyvuoja įrašus; istorija lieka pasiekiama.
+
+`rentalPrice` yra teigiamas sveikasis skaičius centais. Sutarties datos negali persidengti su kita to paties buto sutartimi. Laikotarpio datos turi patekti į sutarties laikotarpį ir negali persidengti su kitu laikotarpiu. Kuriant laikotarpį, `dueDate` lygi `endDate`, o nuomos suma tolygiai padalijama priskirtiems nuomininkams.
+
+Mokėjimų filtravimo pavyzdys: `GET /api/landlord/payments?apartment=12&tenant=8&status=pending`. Visi pateikti filtrai taikomi kartu duomenų bazėje ir visada apribojami prisijungusio nuomotojo butais. `status` gali būti `unpaid`, `overdue`, `pending`, `confirmed` arba `failed`; `overdue` reiškia neapmokėtą mokėjimą su terminu iki šiandienos, o `unpaid` – neapmokėtą mokėjimą, kurio terminas šiandien arba vėliau. Datos lyginamos pagal programos serverio šiandienos datą. Tušti filtrai netaikomi. Neteisingi ID, būsenos arba pasikartojantys parametrai grąžina `400`. Puslapis `/landlord/payments` saugo tuos pačius filtrus savo URL, todėl juos galima išsaugoti ir atkurti perkrovus puslapį.

@@ -14,7 +14,7 @@ export default async function TenantLayout({
   if (user.role !== "TENANT") forbidden();
   const data = await loadTenantData(user.id);
   return (
-    <DataProvider data={data}>
+    <DataProvider data={data} role="tenant">
       <AppShell>{children}</AppShell>
     </DataProvider>
   );

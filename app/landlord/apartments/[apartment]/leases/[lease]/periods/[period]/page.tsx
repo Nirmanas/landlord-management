@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppData, useApiItem, useReloadAppData } from "@/components/data-provider";
-import { apiPath, apiRequest } from "@/lib/api-client";
+import { landlordApi, apiRequest } from "@/lib/api-client";
 import type { PaymentPeriod } from "@/lib/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default function Page() {
   const { apartment: apartmentId, lease: leaseId, period: periodId } =
     useParams<{ apartment: string; lease: string; period: string }>();
   const data = useAppData();
-  const { data: period, loading, error, reload: reloadPeriod } = useApiItem("periods", periodId);
+  const { data: period, loading, error, reload: reloadPeriod } = useApiItem("periods", periodId, apartmentId, leaseId);
   const apartment = data.apartments.find((item) => item.id === apartmentId);
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
@@ -57,7 +57,7 @@ export default function Page() {
   async function saveName(event: React.FormEvent) {
     event.preventDefault(); setSaving(true); setSaveError("");
     try {
-      await apiRequest<PaymentPeriod>(apiPath("periods", periodId), "PUT", { name });
+      await apiRequest<PaymentPeriod>(landlordApi.periods(apartmentId, leaseId, periodId), "PUT", { name });
       await reloadData();
       reloadPeriod();
       setEditing(false);
@@ -82,7 +82,7 @@ export default function Page() {
           <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
           {saveError && <p role="alert">{saveError}</p>}
         </form> : <Button type="button" variant="outline" onClick={() => { setName(period.name); setEditing(true); }}>Edit period name</Button>)}
-      {!period.archivedAt && !lease.archivedAt && !apartment.archivedAt && <ArchiveButton kind="period" id={periodId} destination={landlordRoutes.lease(apartmentId, leaseId)} />}
+      {!period.archivedAt && !lease.archivedAt && !apartment.archivedAt && <ArchiveButton kind="period" id={periodId} apartmentId={apartmentId} leaseId={leaseId} destination={landlordRoutes.lease(apartmentId, leaseId)} />}
       <Card>
         <CardHeader>
           <CardTitle>Period summary</CardTitle>

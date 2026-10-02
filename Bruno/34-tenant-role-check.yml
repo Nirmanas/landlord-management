@@ -1,0 +1,32 @@
+info:
+  name: Nuomininkas negali naudoti nuomotojo API → 403
+  type: http
+  seq: 34
+http:
+  method: GET
+  url: "{{baseUrl}}/api/landlord/apartments"
+  auth:
+    type: bearer
+    token: "{{tenantAccessToken}}"
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getEnvVar("tenantEmail") || !bru.getEnvVar("tenantPassword") || !bru.getVar("tenantAccessToken")) {
+          bru.runner.skipRequest();
+        }
+    - type: tests
+      code: |-
+        test("GET /api/landlord/apartments → 403", function () {
+          expect(res.status).to.equal(403);
+        });
+
+        test("Grąžinta rolės klaida", function () {
+          expect(res.body.error).to.equal("Only landlords can do that.");
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

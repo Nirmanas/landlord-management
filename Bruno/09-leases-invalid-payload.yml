@@ -1,11 +1,11 @@
 info:
   name: "Sutartys: blogi laukai → 422"
   type: http
-  seq: 8
+  seq: 9
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/leases"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases"
   headers:
     - name: Content-Type
       value: application/json
@@ -13,7 +13,6 @@ http:
     type: json
     data: |-
       {
-        "apartmentId": "{{apartmentId}}",
         "startDate": "2027-01-01",
         "endDate": "2027-12-31",
         "rentalPrice": -1,
@@ -29,7 +28,7 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("POST /api/leases → 422", function () {
+        test("POST /api/landlord/apartments/{{apartmentId}}/leases → 422", function () {
           expect(res.status).to.equal(422);
         });
 

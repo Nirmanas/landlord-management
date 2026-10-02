@@ -1,11 +1,12 @@
 info:
   name: "Laikotarpiai: GET įrašą → 200"
   type: http
-  seq: 17
+  seq: 18
 
 http:
   method: GET
-  url: "{{baseUrl}}/api/periods/{{periodId}}"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/pe\
+    riods/{{periodId}}"
   auth:
     type: bearer
     token: "{{accessToken}}"
@@ -14,12 +15,16 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("GET /api/periods/{{periodId}} → 200", function () {
+        test("GET /api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/periods/{{periodId}} → 200", function () {
           expect(res.status).to.equal(200);
         });
 
         test("Grąžintas tinkamas įrašas", function () {
           expect(res.body.data.id).to.equal(bru.getVar("periodId"));
+        });
+
+        test("Laikotarpis priklauso URL nurodytai sutarčiai", function () {
+          expect(res.body.data.leaseId).to.equal(bru.getVar("leaseId"));
         });
 
 settings:

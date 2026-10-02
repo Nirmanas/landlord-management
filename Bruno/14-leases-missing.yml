@@ -1,11 +1,11 @@
 info:
   name: "Sutartys: nerasta → 404"
   type: http
-  seq: 13
+  seq: 14
 
 http:
   method: GET
-  url: "{{baseUrl}}/api/leases/999999999"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases/999999999"
   auth:
     type: bearer
     token: "{{accessToken}}"
@@ -14,7 +14,7 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("GET /api/leases/999999999 → 404", function () {
+        test("GET /api/landlord/apartments/{{apartmentId}}/leases/999999999 → 404", function () {
           expect(res.status).to.equal(404);
         });
 

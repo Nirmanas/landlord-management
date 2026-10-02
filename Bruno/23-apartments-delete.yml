@@ -1,11 +1,11 @@
 info:
   name: "Butai: DELETE → 200"
   type: http
-  seq: 22
+  seq: 23
 
 http:
   method: DELETE
-  url: "{{baseUrl}}/api/apartments/{{apartmentId}}"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}"
   auth:
     type: bearer
     token: "{{accessToken}}"
@@ -14,7 +14,7 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("DELETE /api/apartments/{{apartmentId}} → 200", function () {
+        test("DELETE /api/landlord/apartments/{{apartmentId}} → 200", function () {
           expect(res.status).to.equal(200);
         });
 

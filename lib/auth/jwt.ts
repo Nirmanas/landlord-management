@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 import { Tenant, User, UserRole } from "../generated/prisma/client";
 import { hashValue, verifyHash } from "./crypto";
 

@@ -1,11 +1,11 @@
 info:
   name: "Butai: nėra JSON turinio → 400"
   type: http
-  seq: 1
+  seq: 2
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/apartments"
+  url: "{{baseUrl}}/api/landlord/apartments"
   auth:
     type: bearer
     token: "{{accessToken}}"
@@ -14,7 +14,7 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("POST /api/apartments → 400", function () {
+        test("POST /api/landlord/apartments → 400", function () {
           expect(res.status).to.equal(400);
         });
 

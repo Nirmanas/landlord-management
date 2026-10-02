@@ -1,11 +1,11 @@
 info:
   name: "Butai: PUT įrašą → 201"
   type: http
-  seq: 6
+  seq: 7
 
 http:
   method: PUT
-  url: "{{baseUrl}}/api/apartments/{{apartmentId}}"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}"
   headers:
     - name: Content-Type
       value: application/json
@@ -24,7 +24,7 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("PUT /api/apartments/{{apartmentId}} → 201", function () {
+        test("PUT /api/landlord/apartments/{{apartmentId}} → 201", function () {
           expect(res.status).to.equal(201);
         });
 

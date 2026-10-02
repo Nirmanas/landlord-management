@@ -1,0 +1,33 @@
+info:
+  name: Nuomotojo mokėjimų filtrai URL → 200
+  type: http
+  seq: 38
+http:
+  method: GET
+  url: "{{baseUrl}}/api/landlord/payments?apartment={{apartmentId}}&lease={{lease\
+    Id}}&tenant={{tenantId}}&period={{periodId}}"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("GET /api/landlord/payments?apartment={{apartmentId}}&lease={{leaseId}}&tenant={{tenantId}}&period={{periodId}} → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Grąžintas mokėjimų sąrašas", function () {
+          expect(res.body.data).to.be.an("array");
+        });
+
+        test("Filtrai taikomi kartu", function () {
+          expect(res.body.data.length).to.be.greaterThan(0);
+          expect(res.body.data.every(payment => payment.leaseId === bru.getVar("leaseId") && payment.tenantId === bru.getEnvVar("tenantId") && payment.paymentPeriodId === bru.getVar("periodId"))).to.equal(true);
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

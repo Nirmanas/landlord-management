@@ -9,7 +9,7 @@ import { landlordRoutes } from "@/lib/routes";
 export default function Page() {
   const { apartment: apartmentId, lease: leaseId } = useParams<{ apartment: string; lease: string }>();
   const data = useAppData();
-  const { data: lease, loading, error } = useApiItem("leases", leaseId);
+  const { data: lease, loading, error } = useApiItem("leases", leaseId, apartmentId);
   const apartment = data.apartments.find((item) => item.id === apartmentId);
   if (loading) return <p role="status">Loading lease…</p>;
   if (error && !lease) return <p role="alert">{error}</p>;

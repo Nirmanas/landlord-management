@@ -1,11 +1,12 @@
 info:
   name: "Laikotarpiai: POST → 201"
   type: http
-  seq: 15
+  seq: 16
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/periods"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/pe\
+    riods"
   headers:
     - name: Content-Type
       value: application/json
@@ -13,7 +14,6 @@ http:
     type: json
     data: |-
       {
-        "leaseId": "{{leaseId}}",
         "name": "2027 sausis",
         "startDate": "2027-01-01",
         "endDate": "2027-01-31"
@@ -25,10 +25,11 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: if (res.status === 201 && res.body?.data?.id) bru.setVar("periodId", res.body.data.id);
+      code: if (res.status === 201 && res.body?.data?.id) bru.setVar("periodId",
+        res.body.data.id);
     - type: tests
       code: |-
-        test("POST /api/periods → 201", function () {
+        test("POST /api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/periods → 201", function () {
           expect(res.status).to.equal(201);
         });
 
@@ -41,6 +42,10 @@ runtime:
           expect(res.body.data).to.have.property("endDate");
           expect(res.body.data).to.have.property("dueDate");
           expect(res.body.data).to.have.property("archivedAt");
+        });
+
+        test("Laikotarpis priklauso URL nurodytai sutarčiai", function () {
+          expect(res.body.data.leaseId).to.equal(bru.getVar("leaseId"));
         });
 
 settings:

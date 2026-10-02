@@ -1,11 +1,12 @@
 info:
   name: "Laikotarpiai: nerastas → 404"
   type: http
-  seq: 19
+  seq: 20
 
 http:
   method: GET
-  url: "{{baseUrl}}/api/periods/999999999"
+  url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/pe\
+    riods/999999999"
   auth:
     type: bearer
     token: "{{accessToken}}"
@@ -14,7 +15,7 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("GET /api/periods/999999999 → 404", function () {
+        test("GET /api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/periods/999999999 → 404", function () {
           expect(res.status).to.equal(404);
         });
 

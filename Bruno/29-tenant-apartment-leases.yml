@@ -1,0 +1,37 @@
+info:
+  name: Nuomininko pasirinkto buto sutartys → 200
+  type: http
+  seq: 29
+http:
+  method: GET
+  url: "{{baseUrl}}/api/tenant/apartments/{{apartmentId}}/leases"
+  auth:
+    type: bearer
+    token: "{{tenantAccessToken}}"
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getEnvVar("tenantEmail") || !bru.getEnvVar("tenantPassword") || !bru.getVar("tenantAccessToken")) {
+          bru.runner.skipRequest();
+        }
+    - type: tests
+      code: |-
+        test("GET /api/tenant/apartments/{{apartmentId}}/leases → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Grąžintas sąrašas", function () {
+          expect(res.body.data).to.be.an("array");
+        });
+
+        test("Tik pasirinkto tėvinio įrašo duomenys", function () {
+          expect(res.body.data.every(item => item.apartmentId === bru.getVar("apartmentId"))).to.equal(true);
+          expect(res.body.data.some(item => item.id === bru.getVar("leaseId"))).to.equal(true);
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

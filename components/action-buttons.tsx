@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
-import { archiveRecord, confirmPayment, reportPayment } from "@/app/actions";
-import { apiPath, apiRequest } from "@/lib/api-client";
+import { landlordApi, apiRequest } from "@/lib/api-client";
 import { useAppData, useReloadAppData } from "@/components/data-provider";
 import {
   AlertDialog,
@@ -18,15 +17,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, tenantName } from "@/lib/domain";
+import type { TenantPayment } from "@/lib/types";
 
 export function ArchiveButton({
   kind,
   id,
   destination,
+  apartmentId,
+  leaseId,
 }: {
   kind: "apartment" | "tenant" | "lease" | "period";
   id: string;
   destination: string;
+  apartmentId?: string;
+  leaseId?: string;
 }) {
   const router = useRouter();
   const reload = useReloadAppData();
@@ -40,22 +44,14 @@ export function ArchiveButton({
     )
       return;
     setBusy(true);
+    setError("");
     try {
-      if (kind === "tenant") {
-        const result = await archiveRecord(kind, id);
-        if (!result.ok) throw new Error(result.error);
-      } else {
-        await apiRequest(
-          apiPath(
-            kind === "apartment"
-              ? "apartments"
-              : kind === "lease"
-                ? "leases"
-                : "periods",
-            id,
-          ),
-          "DELETE",
-        );
+      const path = kind === "tenant" ? `/api/landlord/tenants/${encodeURIComponent(id)}`
+        : kind === "apartment" ? landlordApi.apartments(id)
+        : kind === "lease" ? landlordApi.leases(apartmentId!, id)
+        : landlordApi.periods(apartmentId!, leaseId!, id);
+      await apiRequest(path, "DELETE");
+      if (kind !== "tenant") {
         try {
           await reload();
         } catch {
@@ -93,16 +89,20 @@ export function ArchiveButton({
 function PaymentActionButton({
   id,
   mode,
+  payment: providedPayment,
+  onSuccess,
 }: {
   id: string;
   mode: "report" | "confirm";
+  payment?: TenantPayment;
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
   const data = useAppData();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const payment = data.tenantPayments.find((item) => item.id === id);
+  const payment = providedPayment ?? data.tenantPayments.find((item) => item.id === id);
   const period = data.paymentPeriods.find(
     (item) => item.id === payment?.paymentPeriodId,
   );
@@ -123,14 +123,9 @@ function PaymentActionButton({
     setBusy(true);
     setError("");
     try {
-      const result = reporting
-        ? await reportPayment(id)
-        : await confirmPayment(id);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
+      await apiRequest(`/api/${reporting ? "tenant" : "landlord"}/payments/${encodeURIComponent(id)}/${mode}`, "POST");
       setOpen(false);
+      onSuccess?.();
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The request failed.");
@@ -213,6 +208,6 @@ export function ReportPaymentButton({ id }: { id: string }) {
   return <PaymentActionButton id={id} mode="report" />;
 }
 
-export function ConfirmPaymentButton({ id }: { id: string }) {
-  return <PaymentActionButton id={id} mode="confirm" />;
+export function ConfirmPaymentButton({ id, payment, onConfirmed }: { id: string; payment?: TenantPayment; onConfirmed?: () => void }) {
+  return <PaymentActionButton id={id} mode="confirm" payment={payment} onSuccess={onConfirmed} />;
 }

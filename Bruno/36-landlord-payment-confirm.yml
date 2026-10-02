@@ -1,0 +1,33 @@
+info:
+  name: "Nuomotojas: patvirtinti mokėjimą → 200"
+  type: http
+  seq: 36
+http:
+  method: POST
+  url: "{{baseUrl}}/api/landlord/payments/{{paymentId}}/confirm"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getEnvVar("paymentId") || bru.getVar("reportedPaymentId") !== bru.getEnvVar("paymentId")) {
+          bru.runner.skipRequest();
+        }
+    - type: tests
+      code: |-
+        test("POST /api/landlord/payments/{{paymentId}}/confirm → 200", function () {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Pranešto mokėjimo gavimas patvirtintas", function () {
+          expect(res.body.data.id).to.equal(bru.getEnvVar("paymentId"));
+          expect(res.body.data.status).to.equal("confirmed");
+        });
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
