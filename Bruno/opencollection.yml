@@ -35,6 +35,10 @@ request:
       value: ""
     - name: reportedPaymentId
       value: ""
+    - name: landlordEmail
+      value: ""
+    - name: landlordPassword
+      value: ""
 bundled: false
 extensions:
   bruno:

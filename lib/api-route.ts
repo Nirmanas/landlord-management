@@ -141,10 +141,6 @@ export function roleRoute(
 
       const response = await handler(request, params, user);
       response.headers.set("Cache-Control", "no-store");
-      if (mutation && response.ok) {
-        revalidatePath("/landlord", "layout");
-        revalidatePath("/tenant", "layout");
-      }
       return response;
     } catch (error) {
       console.error("API request failed", error);
