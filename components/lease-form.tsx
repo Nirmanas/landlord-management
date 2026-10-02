@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAppData, useReloadAppData } from "@/components/data-provider";
+import { useApiCollection } from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
 import { landlordApi, apiRequest } from "@/lib/api-client";
 import { formatCurrency, splitRent, tenantName } from "@/lib/domain";
 import { landlordRoutes } from "@/lib/routes";
@@ -12,61 +13,187 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/form-controls";
 
-export function LeaseForm({ apartment, lease }: { apartment: Apartment; lease?: Lease }) {
-  const data = useAppData();
+export function LeaseForm({
+  apartment,
+  lease,
+}: {
+  apartment: Apartment;
+  lease?: Lease;
+}) {
+  const tenantsRequest = useApiCollection("landlord", "tenants");
   const router = useRouter();
-  const reload = useReloadAppData();
   const [startDate, setStartDate] = useState(lease?.startDate ?? "");
   const [endDate, setEndDate] = useState(lease?.endDate ?? "");
-  const [rentalPrice, setRentalPrice] = useState(lease ? String(lease.totalRentCents / 100) : "");
+  const [rentalPrice, setRentalPrice] = useState(
+    lease ? String(lease.totalRentCents / 100) : "",
+  );
   const [tenantIds, setTenantIds] = useState(lease?.tenantIds ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  if (tenantsRequest.loading || tenantsRequest.error)
+    return <ApiStatus resources={[tenantsRequest]} />;
+  const tenants = tenantsRequest.data ?? [];
   const cents = Math.round(Number(rentalPrice) * 100);
   const shares = splitRent(cents, tenantIds);
-  const availableTenants = data.tenants.filter((tenant) => !tenant.archivedAt && !tenantIds.includes(tenant.id));
+  const availableTenants = tenants.filter(
+    (tenant) => !tenant.archivedAt && !tenantIds.includes(tenant.id),
+  );
   function addTenant(id: string) {
-    if (id) setTenantIds((current) => current.includes(id) ? current : [...current, id]);
+    if (id)
+      setTenantIds((current) =>
+        current.includes(id) ? current : [...current, id],
+      );
   }
   function removeTenant(id: string) {
     setTenantIds((current) => current.filter((value) => value !== id));
   }
   async function submit(event: React.FormEvent) {
-    event.preventDefault(); setBusy(true); setError("");
+    event.preventDefault();
+    setBusy(true);
+    setError("");
     try {
-      const saved = await apiRequest<Lease>(landlordApi.leases(apartment.id, lease?.id), lease ? "PUT" : "POST", { startDate, endDate, rentalPrice: cents, tenantIds });
+      const saved = await apiRequest<Lease>(
+        landlordApi.leases(apartment.id, lease?.id),
+        lease ? "PUT" : "POST",
+        { startDate, endDate, rentalPrice: cents, tenantIds },
+      );
       const destination = landlordRoutes.lease(apartment.id, saved.id);
-      try { await reload(); router.push(destination); }
-      catch { window.location.assign(destination); }
+      router.push(destination);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The request failed.");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
-  return <form onSubmit={submit} className="space-y-5">
-    <Card><CardHeader><CardTitle>Lease information</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
-      <Field label="Apartment"><p className="rounded-md border border-strong-border bg-background px-3 py-2 text-sm">{apartment.name}</p></Field>
-      <Field label="Start date"><Input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
-      <Field label="End date"><Input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
-      <Field label="Total rent"><Input type="number" min="0.01" step="0.01" required value={rentalPrice} onChange={(e) => setRentalPrice(e.target.value)} /></Field>
-    </CardContent></Card>
-    <Card><CardHeader><CardTitle>Assigned tenants</CardTitle></CardHeader><CardContent className="space-y-3">
-      {!data.tenants.some((tenant) => !tenant.archivedAt) && <p className="text-sm text-muted-foreground">No registered tenants are available yet. Tenants appear here after they create an account.</p>}
-      {data.tenants.some((tenant) => !tenant.archivedAt) && <Field label="Add a registered tenant">
-        <Select aria-label="Add a registered tenant" value="" onChange={(event) => addTenant(event.target.value)} disabled={!availableTenants.length}>
-          <option value="">{availableTenants.length ? "Select a tenant" : "All available tenants added"}</option>
-          {availableTenants.map((tenant) => <option key={tenant.id} value={tenant.id}>{tenantName(tenant)} ({tenant.email})</option>)}
-        </Select>
-      </Field>}
-      {tenantIds.map((id) => {
-        const tenant = data.tenants.find((item) => item.id === id);
-        const share = shares.find((item) => item.tenantId === id);
-        return tenant && <div key={id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
-          <span><span className="font-medium">{tenantName(tenant)}</span>{tenant.archivedAt && <span className="ml-2 text-muted-foreground">Archived</span>}{share && <span className="ml-3 text-brand-soft">{formatCurrency(share.amountCents)}</span>}</span>
-          <Button type="button" variant="ghost" size="sm" onClick={() => removeTenant(id)}>Remove</Button>
-        </div>;
-      })}
-    </CardContent></Card>
-    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    <div className="flex justify-end gap-3"><Link href={lease ? landlordRoutes.lease(apartment.id, lease.id) : landlordRoutes.leases(apartment.id)}><Button type="button" variant="outline">Cancel</Button></Link><Button type="submit" disabled={busy}>{busy ? "Saving…" : lease ? "Save changes" : "Create lease"}</Button></div>
-  </form>;
+  return (
+    <form onSubmit={submit} className="space-y-5">
+      <Card>
+        <CardHeader>
+          <CardTitle>Lease information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <Field label="Apartment">
+            <p className="rounded-md border border-strong-border bg-background px-3 py-2 text-sm">
+              {apartment.name}
+            </p>
+          </Field>
+          <Field label="Start date">
+            <Input
+              type="date"
+              required
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </Field>
+          <Field label="End date">
+            <Input
+              type="date"
+              required
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </Field>
+          <Field label="Total rent">
+            <Input
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              value={rentalPrice}
+              onChange={(e) => setRentalPrice(e.target.value)}
+            />
+          </Field>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Assigned tenants</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!tenants.some((tenant) => !tenant.archivedAt) && (
+            <p className="text-sm text-muted-foreground">
+              No registered tenants are available yet. Tenants appear here after
+              they create an account.
+            </p>
+          )}
+          {tenants.some((tenant) => !tenant.archivedAt) && (
+            <Field label="Add a registered tenant">
+              <Select
+                aria-label="Add a registered tenant"
+                value=""
+                onChange={(event) => addTenant(event.target.value)}
+                disabled={!availableTenants.length}
+              >
+                <option value="">
+                  {availableTenants.length
+                    ? "Select a tenant"
+                    : "All available tenants added"}
+                </option>
+                {availableTenants.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenantName(tenant)} ({tenant.email})
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
+          {tenantIds.map((id) => {
+            const tenant = tenants.find((item) => item.id === id);
+            const share = shares.find((item) => item.tenantId === id);
+            return (
+              tenant && (
+                <div
+                  key={id}
+                  className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"
+                >
+                  <span>
+                    <span className="font-medium">{tenantName(tenant)}</span>
+                    {tenant.archivedAt && (
+                      <span className="ml-2 text-muted-foreground">
+                        Archived
+                      </span>
+                    )}
+                    {share && (
+                      <span className="ml-3 text-brand-soft">
+                        {formatCurrency(share.amountCents)}
+                      </span>
+                    )}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeTenant(id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )
+            );
+          })}
+        </CardContent>
+      </Card>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <div className="flex justify-end gap-3">
+        <Link
+          href={
+            lease
+              ? landlordRoutes.lease(apartment.id, lease.id)
+              : landlordRoutes.leases(apartment.id)
+          }
+        >
+          <Button type="button" variant="outline">
+            Cancel
+          </Button>
+        </Link>
+        <Button type="submit" disabled={busy}>
+          {busy ? "Saving…" : lease ? "Save changes" : "Create lease"}
+        </Button>
+      </div>
+    </form>
+  );
 }

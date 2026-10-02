@@ -1,8 +1,12 @@
 "use client";
 
-import { useAppData, useApiResource } from "@/components/data-provider";
-import { ConfirmPaymentButton } from "@/components/action-buttons";
+import {
+  useApiCollection,
+  useApiResource,
+} from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
 
+import { ConfirmPaymentButton } from "@/components/action-buttons";
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,7 +30,16 @@ const thClass =
 const tdClass = "border-b border-border px-4 py-4 text-soft-foreground";
 
 export default function Page() {
-  const data = useAppData();
+  const apartmentsRequest = useApiCollection("landlord", "apartments");
+  const leasesRequest = useApiCollection("landlord", "leases");
+  const tenantsRequest = useApiCollection("landlord", "tenants");
+  const periodsRequest = useApiCollection("landlord", "periods");
+  const resources = [
+    apartmentsRequest,
+    leasesRequest,
+    tenantsRequest,
+    periodsRequest,
+  ];
   const router = useRouter();
   const searchParams = useSearchParams();
   const filters = {
@@ -36,14 +49,31 @@ export default function Page() {
     period: searchParams.get("period") ?? "",
     status: searchParams.get("status") ?? "",
   };
-  const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value !== ""));
-  const { data: payments, loading, error, reload } = useApiResource<TenantPayment[]>(`/api/landlord/payments${query.size ? `?${query}` : ""}`);
+  const query = new URLSearchParams(
+    Object.entries(filters).filter(([, value]) => value !== ""),
+  );
+  const {
+    data: payments,
+    loading,
+    error,
+    reload,
+  } = useApiResource<TenantPayment[]>(
+    `/api/landlord/payments${query.size ? `?${query}` : ""}`,
+  );
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const apartmentRecords = apartmentsRequest.data ?? [];
+  const leaseRecords = leasesRequest.data ?? [];
+  const tenantRecords = tenantsRequest.data ?? [];
+  const periodRecords = periodsRequest.data ?? [];
   const rows = payments ?? [];
   const set = (key: keyof typeof filters, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
-    router.replace(`/landlord/payments${params.size ? `?${params}` : ""}`, { scroll: false });
+    router.replace(`/landlord/payments${params.size ? `?${params}` : ""}`, {
+      scroll: false,
+    });
   };
   return (
     <div className="space-y-6">
@@ -59,7 +89,7 @@ export default function Page() {
             onChange={(e) => set("apartment", e.target.value)}
           >
             <option value="">All apartments</option>
-            {data.apartments.map((a) => (
+            {apartmentRecords.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
@@ -71,9 +101,9 @@ export default function Page() {
             onChange={(e) => set("lease", e.target.value)}
           >
             <option value="">All leases</option>
-            {data.leases.map((l) => (
+            {leaseRecords.map((l) => (
               <option key={l.id} value={l.id}>
-                {data.apartments.find((a) => a.id === l.apartmentId)?.name}
+                {apartmentRecords.find((a) => a.id === l.apartmentId)?.name}
               </option>
             ))}
           </Select>
@@ -83,7 +113,7 @@ export default function Page() {
             onChange={(e) => set("tenant", e.target.value)}
           >
             <option value="">All tenants</option>
-            {data.tenants.map((t) => (
+            {tenantRecords.map((t) => (
               <option key={t.id} value={t.id}>
                 {tenantName(t)}
               </option>
@@ -95,7 +125,7 @@ export default function Page() {
             onChange={(e) => set("period", e.target.value)}
           >
             <option value="">All periods</option>
-            {data.paymentPeriods.map((p) => (
+            {periodRecords.map((p) => (
               <option key={p.id} value={p.id}>
                 {formatDate(p.startDate)}
               </option>
@@ -115,10 +145,14 @@ export default function Page() {
           </Select>
         </CardContent>
       </Card>
-      {loading ? <p role="status">Loading payments…</p> : error ? (
+      {loading ? (
+        <p role="status">Loading payments…</p>
+      ) : error ? (
         <div role="alert" className="space-y-3">
           <p className="text-sm text-destructive">{error}</p>
-          <Button type="button" variant="outline" onClick={reload}>Retry</Button>
+          <Button type="button" variant="outline" onClick={reload}>
+            Retry
+          </Button>
         </div>
       ) : rows.length ? (
         <Card>
@@ -136,16 +170,16 @@ export default function Page() {
               </thead>
               <tbody>
                 {rows.map((payment) => {
-                  const tenant = data.tenants.find(
+                  const tenant = tenantRecords.find(
                     (t) => t.id === payment.tenantId,
                   );
-                  const lease = data.leases.find(
+                  const lease = leaseRecords.find(
                     (l) => l.id === payment.leaseId,
                   );
-                  const apartment = data.apartments.find(
+                  const apartment = apartmentRecords.find(
                     (a) => a.id === lease?.apartmentId,
                   );
-                  const period = data.paymentPeriods.find(
+                  const period = periodRecords.find(
                     (p) => p.id === payment.paymentPeriodId,
                   );
                   return (
@@ -176,18 +210,30 @@ export default function Page() {
                         <PaymentBadge payment={payment} period={period} />
                       </td>
                       <td className={tdClass}>
-                        <div className="flex items-center gap-3">{lease && period && (
-                          <Link
-                            href={landlordRoutes.period(
-                              lease.apartmentId,
-                              lease.id,
-                              period.id,
-                            )}
-                            className="font-medium text-brand hover:underline"
-                          >
-                            View period
-                          </Link>
-                        )}{payment.status === "pending" && <ConfirmPaymentButton id={payment.id} payment={payment} onConfirmed={reload} />}</div>
+                        <div className="flex items-center gap-3">
+                          {lease && period && (
+                            <Link
+                              href={landlordRoutes.period(
+                                lease.apartmentId,
+                                lease.id,
+                                period.id,
+                              )}
+                              className="font-medium text-brand hover:underline"
+                            >
+                              View period
+                            </Link>
+                          )}
+                          {payment.status === "pending" && (
+                            <ConfirmPaymentButton
+                              id={payment.id}
+                              payment={payment}
+                              apartment={apartment}
+                              period={period}
+                              tenant={tenant}
+                              onConfirmed={reload}
+                            />
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -198,11 +244,7 @@ export default function Page() {
         </Card>
       ) : (
         <EmptyState
-          title={
-            query.size
-              ? "No matching payments"
-              : "No payments yet"
-          }
+          title={query.size ? "No matching payments" : "No payments yet"}
           description={
             query.size
               ? "Try clearing one or more filters."

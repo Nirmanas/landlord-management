@@ -1,20 +1,31 @@
 "use client";
 
+import { useApiItem } from "@/components/hooks/api-resource";
+
 import { useParams } from "next/navigation";
 import { ApartmentForm } from "@/components/apartment-form";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { landlordRoutes } from "@/lib/routes";
-import { useApiItem } from "@/components/data-provider";
 
 export default function Page() {
   const { apartment: id } = useParams<{ apartment: string }>();
-  const { data: record, loading, error } = useApiItem("apartments", id);
+  const {
+    data: record,
+    loading,
+    error,
+  } = useApiItem("landlord", "apartments", id);
   if (loading) return <p role="status">Loading apartment…</p>;
   if (error && !record) return <p role="alert">{error}</p>;
   if (!record) {
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
   }
-  if (record.archivedAt) return <NotFoundState noun="Active apartment" href={landlordRoutes.apartment(id)} />;
+  if (record.archivedAt)
+    return (
+      <NotFoundState
+        noun="Active apartment"
+        href={landlordRoutes.apartment(id)}
+      />
+    );
   return (
     <div className="space-y-6">
       <BackLink href={landlordRoutes.apartment(record.id)} />

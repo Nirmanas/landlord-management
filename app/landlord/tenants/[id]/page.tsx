@@ -1,8 +1,9 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
-import { ArchiveButton } from "@/components/action-buttons";
+import { useApiItem, useApiCollection } from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
 
+import { ArchiveButton } from "@/components/action-buttons";
 
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
@@ -22,21 +23,43 @@ import { landlordRoutes } from "@/lib/routes";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const data = useAppData();
-  const tenant = data.tenants.find((t) => t.id === id);
+  const apartmentsRequest = useApiCollection("landlord", "apartments");
+  const leasesRequest = useApiCollection("landlord", "leases");
+  const tenantRequest = useApiItem("landlord", "tenants", id);
+  const resources = [apartmentsRequest, leasesRequest, tenantRequest];
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const apartmentRecords = apartmentsRequest.data ?? [];
+  const leaseRecords = leasesRequest.data ?? [];
+  const tenant = tenantRequest.data;
   if (!tenant) return <NotFoundState noun="Tenant" href="/landlord/tenants" />;
-  const leases = data.leases.filter((l) => l.tenantIds.includes(id));
+  const leases = leaseRecords.filter((l) => l.tenantIds.includes(id));
   return (
     <div className="space-y-6">
       <BackLink href="/landlord/tenants">All tenants</BackLink>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
           title={tenantName(tenant)}
-          description={tenant.archivedAt ? "Archived tenant profile and lease history" : "Tenant profile and lease history"}
+          description={
+            tenant.archivedAt
+              ? "Archived tenant profile and lease history"
+              : "Tenant profile and lease history"
+          }
         />
-        <div className="flex gap-2">{!tenant.archivedAt && <Link href={`/landlord/tenants/${id}/edit`}>
-          <Button variant="outline">Edit tenant</Button>
-        </Link>}{!tenant.archivedAt && <ArchiveButton kind="tenant" id={id} destination="/landlord/tenants" />}</div>
+        <div className="flex gap-2">
+          {!tenant.archivedAt && (
+            <Link href={`/landlord/tenants/${id}/edit`}>
+              <Button variant="outline">Edit tenant</Button>
+            </Link>
+          )}
+          {!tenant.archivedAt && (
+            <ArchiveButton
+              kind="tenant"
+              id={id}
+              destination="/landlord/tenants"
+            />
+          )}
+        </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
         <Card>
@@ -60,7 +83,7 @@ export default function Page() {
           </CardHeader>
           <CardContent className="p-0">
             {leases.map((lease) => {
-              const apartment = data.apartments.find(
+              const apartment = apartmentRecords.find(
                 (a) => a.id === lease.apartmentId,
               );
               const share = splitRent(

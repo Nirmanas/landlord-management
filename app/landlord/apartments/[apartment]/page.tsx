@@ -1,8 +1,9 @@
 "use client";
 
-import { useAppData, useApiItem } from "@/components/data-provider";
-import { ArchiveButton } from "@/components/action-buttons";
+import { useApiItem, useApiCollection } from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
 
+import { ArchiveButton } from "@/components/action-buttons";
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +22,16 @@ import { useParams } from "next/navigation";
 
 export default function Page() {
   const { apartment: id } = useParams<{ apartment: string }>();
-  const data = useAppData();
-  const { data: apartment, loading, error } = useApiItem("apartments", id);
-  if (loading) return <p role="status">Loading apartment…</p>;
-  if (error && !apartment) return <p role="alert">{error}</p>;
+  const leasesRequest = useApiCollection("landlord", "leases", id);
+  const apartmentRequest = useApiItem("landlord", "apartments", id);
+  const resources = [leasesRequest, apartmentRequest];
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const leaseRecords = leasesRequest.data ?? [];
+  const { data: apartment } = apartmentRequest;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  const leases = data.leases.filter((l) => l.apartmentId === id);
+  const leases = leaseRecords.filter((l) => l.apartmentId === id);
   return (
     <div className="space-y-6">
       <BackLink href="/landlord/apartments">All apartments</BackLink>
@@ -40,13 +44,23 @@ export default function Page() {
           <Link href={landlordRoutes.leases(id)}>
             <Button variant="outline">View leases</Button>
           </Link>
-          {!apartment.archivedAt && <Link href={landlordRoutes.newLease(id)}>
-            <Button>New lease</Button>
-          </Link>}
-          {!apartment.archivedAt && <Link href={landlordRoutes.apartmentEdit(id)}>
-            <Button variant="outline">Edit apartment</Button>
-          </Link>}
-          {!apartment.archivedAt && <ArchiveButton kind="apartment" id={id} destination="/landlord/apartments" />}
+          {!apartment.archivedAt && (
+            <Link href={landlordRoutes.newLease(id)}>
+              <Button>New lease</Button>
+            </Link>
+          )}
+          {!apartment.archivedAt && (
+            <Link href={landlordRoutes.apartmentEdit(id)}>
+              <Button variant="outline">Edit apartment</Button>
+            </Link>
+          )}
+          {!apartment.archivedAt && (
+            <ArchiveButton
+              kind="apartment"
+              id={id}
+              destination="/landlord/apartments"
+            />
+          )}
         </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
@@ -55,7 +69,9 @@ export default function Page() {
             <CardTitle>Property details</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl><DetailItem label="Address">{apartment.address}</DetailItem></dl>
+            <dl>
+              <DetailItem label="Address">{apartment.address}</DetailItem>
+            </dl>
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
@@ -84,7 +100,17 @@ export default function Page() {
                         {formatCurrency(lease.totalRentCents)}
                       </p>
                     </div>
-                    <Badge tone={lease.archivedAt || apartment.archivedAt ? "neutral" : lease.status}>{lease.archivedAt || apartment.archivedAt ? "Archived" : lease.status}</Badge>
+                    <Badge
+                      tone={
+                        lease.archivedAt || apartment.archivedAt
+                          ? "neutral"
+                          : lease.status
+                      }
+                    >
+                      {lease.archivedAt || apartment.archivedAt
+                        ? "Archived"
+                        : lease.status}
+                    </Badge>
                   </Link>
                 ))}
               </div>

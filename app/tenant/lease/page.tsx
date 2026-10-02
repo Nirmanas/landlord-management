@@ -1,7 +1,11 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
-
+import {
+  useApiCollection,
+  useApiResource,
+} from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
+import type { Tenant } from "@/lib/types";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -14,16 +18,23 @@ import { formatCurrency, splitRent } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 
 export default function Page() {
-  const data = useAppData();
-  const tenant = data.tenants[0];
-  const leases = data.leases.filter((l) =>
+  const apartmentsRequest = useApiCollection("tenant", "apartments");
+  const leasesRequest = useApiCollection("tenant", "leases");
+  const profileRequest = useApiResource<Tenant | null>("/api/tenant/profile");
+  const resources = [apartmentsRequest, leasesRequest, profileRequest];
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const apartmentRecords = apartmentsRequest.data ?? [];
+  const leaseRecords = leasesRequest.data ?? [];
+  const tenant = profileRequest.data;
+  const leases = leaseRecords.filter((l) =>
     l.tenantIds.includes(tenant?.id ?? ""),
   );
   const currentLease =
     leases.find((l) => l.status === "active") ??
     leases.find((l) => l.status === "upcoming") ??
     leases[0];
-  const apartment = data.apartments.find(
+  const apartment = apartmentRecords.find(
     (a) => a.id === currentLease?.apartmentId,
   );
   const share = currentLease
@@ -51,9 +62,7 @@ export default function Page() {
         <div className="border-b border-border bg-linear-to-r from-brand-deep to-brand-solid p-6 text-brand-foreground">
           <p className="text-sm text-brand-tint">Current residence</p>
           <h2 className="mt-1 text-2xl font-semibold">{apartment.name}</h2>
-          <p className="mt-2 text-sm text-brand-faint">
-            {apartment.address}
-          </p>
+          <p className="mt-2 text-sm text-brand-faint">{apartment.address}</p>
         </div>
         <CardContent className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <DetailItem label="Tenant">{tenantName(tenant)}</DetailItem>

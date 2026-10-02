@@ -1,6 +1,13 @@
 "use client";
 
-import { useAppData, useApiItem, useApiCollection } from "@/components/data-provider";
+import {
+  useApiItem,
+  useApiCollection,
+  useApiResource,
+} from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
+import type { TenantPayment } from "@/lib/types";
+
 import {
   ArchiveButton,
   ConfirmPaymentButton,
@@ -31,13 +38,32 @@ export default function Page() {
     apartment: string;
     lease: string;
   }>();
-  const data = useAppData();
-  const { data: lease, loading, error } = useApiItem("leases", leaseId, apartmentId);
-  const { data: periodRecords, loading: periodsLoading, error: periodsError } = useApiCollection("periods", apartmentId, leaseId);
-  const apartment = data.apartments.find((item) => item.id === apartmentId);
-  if (loading || periodsLoading) return <p role="status">Loading lease…</p>;
-  if (periodsError) return <p role="alert">{periodsError}</p>;
-  if (error && !lease) return <p role="alert">{error}</p>;
+  const tenantsRequest = useApiCollection("landlord", "tenants");
+  const paymentsRequest = useApiResource<TenantPayment[]>(
+    `/api/landlord/payments?lease=${encodeURIComponent(leaseId)}`,
+  );
+  const apartmentRequest = useApiItem("landlord", "apartments", apartmentId);
+  const leaseRequest = useApiItem("landlord", "leases", leaseId, apartmentId);
+  const periodRecordsRequest = useApiCollection(
+    "landlord",
+    "periods",
+    apartmentId,
+    leaseId,
+  );
+  const resources = [
+    tenantsRequest,
+    paymentsRequest,
+    apartmentRequest,
+    leaseRequest,
+    periodRecordsRequest,
+  ];
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const tenantRecords = tenantsRequest.data ?? [];
+  const paymentRecords = paymentsRequest.data ?? [];
+  const { data: lease } = leaseRequest;
+  const { data: periodRecords } = periodRecordsRequest;
+  const apartment = apartmentRequest.data;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
   if (!lease || lease.apartmentId !== apartmentId)
@@ -112,7 +138,7 @@ export default function Page() {
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             {lease.tenantIds.map((tenantId) => {
-              const tenant = data.tenants.find((t) => t.id === tenantId);
+              const tenant = tenantRecords.find((t) => t.id === tenantId);
               const share = shares.find((s) => s.tenantId === tenantId);
               return (
                 <div
@@ -146,7 +172,7 @@ export default function Page() {
         {periods.length ? (
           <div className="space-y-4">
             {periods.map((period) => {
-              const payments = data.tenantPayments.filter(
+              const payments = paymentRecords.filter(
                 (p) => p.paymentPeriodId === period.id,
               );
               return (
@@ -187,7 +213,7 @@ export default function Page() {
                   </CardHeader>
                   <CardContent className="divide-y divide-border p-0">
                     {payments.map((payment) => {
-                      const tenant = data.tenants.find(
+                      const tenant = tenantRecords.find(
                         (t) => t.id === payment.tenantId,
                       );
                       return (
@@ -206,7 +232,14 @@ export default function Page() {
                           <div className="flex items-center gap-2">
                             <PaymentBadge payment={payment} period={period} />
                             {payment.status === "pending" && (
-                              <ConfirmPaymentButton id={payment.id} />
+                              <ConfirmPaymentButton
+                                id={payment.id}
+                                payment={payment}
+                                apartment={apartment}
+                                period={period}
+                                tenant={tenant}
+                                onConfirmed={paymentsRequest.reload}
+                              />
                             )}
                           </div>
                         </div>

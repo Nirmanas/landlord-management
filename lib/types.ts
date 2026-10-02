@@ -1,57 +1,77 @@
-export type LeaseStatus = "upcoming" | "active" | "ended"
-export type PaymentStatus = "unpaid" | "pending" | "confirmed" | "failed"
+export type LeaseStatus = "upcoming" | "active" | "ended";
+export type PaymentStatus = "unpaid" | "pending" | "confirmed" | "failed";
 
 export interface Apartment {
-  id: string
-  name: string
-  address: string
-  archivedAt: string | null
+  id: string;
+  name: string;
+  address: string;
+  archivedAt: string | null;
 }
 
 export interface Tenant {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  archivedAt: string | null
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  archivedAt: string | null;
 }
 
 export interface Lease {
-  id: string
-  apartmentId: string
-  startDate: string
-  endDate: string
-  status: LeaseStatus
-  totalRentCents: number
-  tenantIds: string[]
-  archivedAt: string | null
+  id: string;
+  apartmentId: string;
+  startDate: string;
+  endDate: string;
+  status: LeaseStatus;
+  totalRentCents: number;
+  tenantIds: string[];
+  archivedAt: string | null;
 }
 
 export interface PaymentPeriod {
-  id: string
-  leaseId: string
-  name: string
-  startDate: string
-  endDate: string
-  dueDate: string
-  archivedAt: string | null
+  id: string;
+  leaseId: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  dueDate: string;
+  archivedAt: string | null;
 }
 
 export interface TenantPayment {
-  id: string
-  paymentPeriodId: string
-  leaseId: string
-  tenantId: string
-  amountCents: number
-  status: PaymentStatus
+  id: string;
+  paymentPeriodId: string;
+  leaseId: string;
+  tenantId: string;
+  amountCents: number;
+  status: PaymentStatus;
 }
 
-export interface AppData {
-  apartments: Apartment[]
-  tenants: Tenant[]
-  leases: Lease[]
-  paymentPeriods: PaymentPeriod[]
-  tenantPayments: TenantPayment[]
+export interface LandlordDashboard {
+  metrics: {
+    apartments: number;
+    activeLeases: number;
+    tenants: number;
+    outstandingCount: number;
+    outstandingCents: number;
+    pendingCount: number;
+  };
+  pendingPayments: {
+    id: string;
+    amountCents: number;
+    tenantName: string;
+    apartmentName: string;
+  }[];
+  apartments: { id: string; name: string; hasActiveLease: boolean }[];
 }
 
+export interface TenantDashboard {
+  tenant: Tenant | null;
+  currentLease: Lease | null;
+  apartment: Apartment | null;
+  shareCents: number | null;
+  outstandingCents: number;
+  outstandingCount: number;
+  nextPayment: { id: string; amountCents: number; dueDate: string } | null;
+  upcomingPayments: { id: string; amountCents: number; dueDate: string }[];
+}

@@ -1,20 +1,21 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
+import { useApiResource } from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
 
 import Link from "next/link";
 import { Building2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader, StatCard } from "@/components/shared";
-import { formatCurrency, landlordMetrics } from "@/lib/domain";
-import { tenantName } from "@/lib/domain";
+import { formatCurrency } from "@/lib/domain";
+import type { LandlordDashboard } from "@/lib/types";
 import { landlordRoutes } from "@/lib/routes";
 
 export default function Page() {
-  const data = useAppData();
-  const metrics = landlordMetrics(data);
-  const pending = data.tenantPayments.filter((p) => p.status === "pending");
+  const request = useApiResource<LandlordDashboard>("/api/landlord/dashboard");
+  if (!request.data) return <ApiStatus resources={[request]} />;
+  const { metrics, pendingPayments: pending, apartments } = request.data;
   return (
     <div className="space-y-7">
       <PageHeader
@@ -45,15 +46,6 @@ export default function Page() {
             {pending.length ? (
               <div className="divide-y divide-border">
                 {pending.map((payment) => {
-                  const tenant = data.tenants.find(
-                    (t) => t.id === payment.tenantId,
-                  );
-                  const lease = data.leases.find(
-                    (l) => l.id === payment.leaseId,
-                  );
-                  const apartment = data.apartments.find(
-                    (a) => a.id === lease?.apartmentId,
-                  );
                   return (
                     <Link
                       href="/landlord/payments"
@@ -62,10 +54,10 @@ export default function Page() {
                     >
                       <div>
                         <p className="font-medium text-foreground">
-                          {tenant ? tenantName(tenant) : "Unknown tenant"}
+                          {payment.tenantName}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {apartment?.name}
+                          {payment.apartmentName}
                         </p>
                       </div>
                       <div className="text-right">
@@ -90,43 +82,36 @@ export default function Page() {
             <CardTitle>Portfolio snapshot</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {data.apartments.filter((apartment) => !apartment.archivedAt)
-              .length === 0 && (
+            {apartments.length === 0 && (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 No apartments yet. Add your first apartment to start your
                 portfolio.
               </div>
             )}
-            {data.apartments
-              .filter((item) => !item.archivedAt)
-              .map((apartment) => {
-                const active = data.leases.find(
-                  (l) =>
-                    l.apartmentId === apartment.id &&
-                    l.status === "active" &&
-                    !l.archivedAt,
-                );
-                return (
-                  <Link
-                    href={landlordRoutes.apartment(apartment.id)}
-                    key={apartment.id}
-                    className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-accent"
-                  >
-                    <div className="grid size-9 place-items-center rounded-lg bg-brand-surface/40">
-                      <Building2 className="size-4 text-brand" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {apartment.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {active ? "Active lease" : "No active lease"}
-                      </p>
-                    </div>
-                    <ChevronRight className="size-4 text-subtle-foreground" />
-                  </Link>
-                );
-              })}
+            {apartments.map((apartment) => {
+              return (
+                <Link
+                  href={landlordRoutes.apartment(apartment.id)}
+                  key={apartment.id}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-accent"
+                >
+                  <div className="grid size-9 place-items-center rounded-lg bg-brand-surface/40">
+                    <Building2 className="size-4 text-brand" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {apartment.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {apartment.hasActiveLease
+                        ? "Active lease"
+                        : "No active lease"}
+                    </p>
+                  </div>
+                  <ChevronRight className="size-4 text-subtle-foreground" />
+                </Link>
+              );
+            })}
           </CardContent>
         </Card>
       </div>

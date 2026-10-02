@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { landlordApi, apiRequest } from "@/lib/api-client";
-import { useAppData, useReloadAppData } from "@/components/data-provider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +16,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, tenantName } from "@/lib/domain";
-import type { TenantPayment } from "@/lib/types";
+import type {
+  Apartment,
+  PaymentPeriod,
+  Tenant,
+  TenantPayment,
+} from "@/lib/types";
+
+type PaymentDetails = {
+  payment: TenantPayment;
+  apartment?: Apartment;
+  period?: PaymentPeriod;
+  tenant?: Tenant;
+};
 
 export function ArchiveButton({
   kind,
@@ -33,7 +44,6 @@ export function ArchiveButton({
   leaseId?: string;
 }) {
   const router = useRouter();
-  const reload = useReloadAppData();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function archive() {
@@ -46,19 +56,15 @@ export function ArchiveButton({
     setBusy(true);
     setError("");
     try {
-      const path = kind === "tenant" ? `/api/landlord/tenants/${encodeURIComponent(id)}`
-        : kind === "apartment" ? landlordApi.apartments(id)
-        : kind === "lease" ? landlordApi.leases(apartmentId!, id)
-        : landlordApi.periods(apartmentId!, leaseId!, id);
+      const path =
+        kind === "tenant"
+          ? `/api/landlord/tenants/${encodeURIComponent(id)}`
+          : kind === "apartment"
+            ? landlordApi.apartments(id)
+            : kind === "lease"
+              ? landlordApi.leases(apartmentId!, id)
+              : landlordApi.periods(apartmentId!, leaseId!, id);
       await apiRequest(path, "DELETE");
-      if (kind !== "tenant") {
-        try {
-          await reload();
-        } catch {
-          window.location.assign(destination);
-          return;
-        }
-      }
       router.push(destination);
       router.refresh();
     } catch (cause) {
@@ -89,28 +95,20 @@ export function ArchiveButton({
 function PaymentActionButton({
   id,
   mode,
-  payment: providedPayment,
+  payment,
+  apartment,
+  period,
+  tenant,
   onSuccess,
 }: {
   id: string;
   mode: "report" | "confirm";
-  payment?: TenantPayment;
   onSuccess?: () => void;
-}) {
+} & PaymentDetails) {
   const router = useRouter();
-  const data = useAppData();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const payment = providedPayment ?? data.tenantPayments.find((item) => item.id === id);
-  const period = data.paymentPeriods.find(
-    (item) => item.id === payment?.paymentPeriodId,
-  );
-  const lease = data.leases.find((item) => item.id === payment?.leaseId);
-  const apartment = data.apartments.find(
-    (item) => item.id === lease?.apartmentId,
-  );
-  const tenant = data.tenants.find((item) => item.id === payment?.tenantId);
   const reporting = mode === "report";
   const label = reporting ? "Confirm transfer" : "Confirm received";
   const title = reporting
@@ -123,7 +121,10 @@ function PaymentActionButton({
     setBusy(true);
     setError("");
     try {
-      await apiRequest(`/api/${reporting ? "tenant" : "landlord"}/payments/${encodeURIComponent(id)}/${mode}`, "POST");
+      await apiRequest(
+        `/api/${reporting ? "tenant" : "landlord"}/payments/${encodeURIComponent(id)}/${mode}`,
+        "POST",
+      );
       setOpen(false);
       onSuccess?.();
       router.refresh();
@@ -204,10 +205,32 @@ function PaymentActionButton({
   );
 }
 
-export function ReportPaymentButton({ id }: { id: string }) {
-  return <PaymentActionButton id={id} mode="report" />;
+export function ReportPaymentButton({
+  id,
+  onReported,
+  ...details
+}: { id: string; onReported: () => void } & PaymentDetails) {
+  return (
+    <PaymentActionButton
+      id={id}
+      mode="report"
+      {...details}
+      onSuccess={onReported}
+    />
+  );
 }
 
-export function ConfirmPaymentButton({ id, payment, onConfirmed }: { id: string; payment?: TenantPayment; onConfirmed?: () => void }) {
-  return <PaymentActionButton id={id} mode="confirm" payment={payment} onSuccess={onConfirmed} />;
+export function ConfirmPaymentButton({
+  id,
+  onConfirmed,
+  ...details
+}: { id: string; onConfirmed: () => void } & PaymentDetails) {
+  return (
+    <PaymentActionButton
+      id={id}
+      mode="confirm"
+      {...details}
+      onSuccess={onConfirmed}
+    />
+  );
 }

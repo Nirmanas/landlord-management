@@ -16,6 +16,7 @@ info:
     requests, it takes precedence; an invalid header does not fall back to
     the `auth` cookie. See the security schemes and `AuthTokenPayload` below.
 tags:
+  - name: Dashboards
   - name: Authentication
   - name: Apartments
   - name: Leases
@@ -26,6 +27,92 @@ security:
   - bearerAuth: []
   - cookieAuth: []
 paths:
+  /api/landlord/dashboard:
+    get:
+      tags: [Dashboards]
+      operationId: landlordDashboard
+      summary: Get the landlord dashboard in one request
+      description: Returns owned apartment snapshots, active lease and tenant counts, outstanding totals and pending payment cards. The tenant directory count includes all registered tenant accounts.
+      responses:
+        "200":
+          description: Dashboard data.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LandlordDashboardResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/tenant/dashboard:
+    get:
+      tags: [Dashboards]
+      operationId: tenantDashboard
+      summary: Get the tenant dashboard in one request
+      description: Returns the signed-in tenant's profile, current home and rent share, outstanding totals and the next three upcoming payments.
+      responses:
+        "200":
+          description: Dashboard data. Profile and current home may be null.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantDashboardResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/landlord/tenants:
+    get:
+      tags: [Tenants]
+      operationId: landlordListTenants
+      summary: List registered tenant contacts, including archived profiles
+      responses:
+        "200":
+          description: Tenant directory.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/tenant/profile:
+    get:
+      tags: [Tenants]
+      operationId: tenantProfile
+      summary: Get the signed-in tenant's contact profile
+      responses:
+        "200":
+          description: Tenant profile, or null if no profile exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    anyOf:
+                      - { $ref: "#/components/schemas/Tenant" }
+                      - { type: "null" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/tenant/payments:
+    get:
+      tags: [Payments]
+      operationId: tenantListPayments
+      summary: List only the signed-in tenant's payments
+      description: Includes archived history, ordered by payment date and ID descending.
+      responses:
+        "200":
+          description: Tenant payments.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
   /api/auth/register:
     post:
       tags:
@@ -1027,6 +1114,25 @@ paths:
         schema:
           $ref: "#/components/schemas/RecordId"
   /api/landlord/tenants/{id}:
+    get:
+      tags: [Tenants]
+      operationId: landlordGetTenant
+      summary: Get a registered tenant's contact profile
+      responses:
+        "200":
+          description: Tenant profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Tenant" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
     parameters:
       - name: id
         in: path
@@ -1375,6 +1481,91 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
   schemas:
+    Tenant:
+      type: object
+      required: [id, firstName, lastName, email, phone, archivedAt]
+      properties:
+        id: { $ref: "#/components/schemas/RecordId" }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        archivedAt: { type: [string, "null"], format: date-time }
+    LandlordDashboardResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [metrics, pendingPayments, apartments]
+          properties:
+            metrics:
+              type: object
+              required: [apartments, activeLeases, tenants, outstandingCount, outstandingCents, pendingCount]
+              properties:
+                apartments: { type: integer }
+                activeLeases: { type: integer }
+                tenants: { type: integer }
+                outstandingCount: { type: integer }
+                outstandingCents: { type: integer }
+                pendingCount: { type: integer }
+            pendingPayments:
+              type: array
+              items:
+                type: object
+                required: [id, amountCents, tenantName, apartmentName]
+                properties:
+                  id: { $ref: "#/components/schemas/RecordId" }
+                  amountCents: { type: integer }
+                  tenantName: { type: string }
+                  apartmentName: { type: string }
+            apartments:
+              type: array
+              items:
+                type: object
+                required: [id, name, hasActiveLease]
+                properties:
+                  id: { $ref: "#/components/schemas/RecordId" }
+                  name: { type: string }
+                  hasActiveLease: { type: boolean }
+    UpcomingPayment:
+      type: object
+      required: [id, amountCents, dueDate]
+      properties:
+        id: { $ref: "#/components/schemas/RecordId" }
+        amountCents: { type: integer }
+        dueDate: { type: string, format: date }
+    TenantDashboardResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [tenant, currentLease, apartment, shareCents, outstandingCents, outstandingCount, nextPayment, upcomingPayments]
+          properties:
+            tenant:
+              anyOf:
+                - { $ref: "#/components/schemas/Tenant" }
+                - { type: "null" }
+            currentLease:
+              anyOf:
+                - { $ref: "#/components/schemas/Lease" }
+                - { type: "null" }
+            apartment:
+              anyOf:
+                - { $ref: "#/components/schemas/Apartment" }
+                - { type: "null" }
+            shareCents: { type: [integer, "null"] }
+            outstandingCents: { type: integer }
+            outstandingCount: { type: integer }
+            nextPayment:
+              anyOf:
+                - { $ref: "#/components/schemas/UpcomingPayment" }
+                - { type: "null" }
+            upcomingPayments:
+              type: array
+              maxItems: 3
+              items: { $ref: "#/components/schemas/UpcomingPayment" }
     ErrorResponse:
       type: object
       required: [error]

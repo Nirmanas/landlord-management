@@ -1,8 +1,9 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
-import { useState } from "react";
+import { useApiCollection } from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
 
+import { useState } from "react";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,16 +17,30 @@ const thClass =
 const tdClass = "border-b border-border px-4 py-4 text-soft-foreground";
 
 export default function Page() {
-  const data = useAppData();
   const [archived, setArchived] = useState(false);
-  const tenants = data.tenants.filter((item) => Boolean(item.archivedAt) === archived);
+  const leasesRequest = useApiCollection("landlord", "leases");
+  const tenantsRequest = useApiCollection("landlord", "tenants");
+  const resources = [leasesRequest, tenantsRequest];
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const leaseRecords = leasesRequest.data ?? [];
+  const tenantRecords = tenantsRequest.data ?? [];
+  const tenants = tenantRecords.filter(
+    (item) => Boolean(item.archivedAt) === archived,
+  );
   return (
     <div className="space-y-6">
       <PageHeader
         title="Tenants"
         description="Registered tenant accounts are available here and in the lease selector."
       />
-      <Button variant="outline" type="button" onClick={() => setArchived((value) => !value)}>{archived ? "Show active" : "Show archived"}</Button>
+      <Button
+        variant="outline"
+        type="button"
+        onClick={() => setArchived((value) => !value)}
+      >
+        {archived ? "Show active" : "Show archived"}
+      </Button>
       {tenants.length ? (
         <Card>
           <CardContent className="overflow-x-auto p-0">
@@ -40,7 +55,7 @@ export default function Page() {
               </thead>
               <tbody>
                 {tenants.map((tenant) => {
-                  const leases = data.leases.filter((l) =>
+                  const leases = leaseRecords.filter((l) =>
                     l.tenantIds.includes(tenant.id),
                   );
                   return (
@@ -52,7 +67,9 @@ export default function Page() {
                       </td>
                       <td className={tdClass}>
                         <p>{tenant.email}</p>
-                        <p className="text-xs text-muted-foreground">{tenant.phone}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {tenant.phone}
+                        </p>
                       </td>
                       <td className={tdClass}>{leases.length}</td>
                       <td className={`${tdClass} text-right`}>
@@ -61,11 +78,13 @@ export default function Page() {
                             View
                           </Button>
                         </Link>
-                        {!tenant.archivedAt && <Link href={`/landlord/tenants/${tenant.id}/edit`}>
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
-                        </Link>}
+                        {!tenant.archivedAt && (
+                          <Link href={`/landlord/tenants/${tenant.id}/edit`}>
+                            <Button variant="ghost" size="sm">
+                              Edit
+                            </Button>
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );
@@ -77,7 +96,11 @@ export default function Page() {
       ) : (
         <EmptyState
           title={archived ? "No archived tenants" : "No tenants yet"}
-          description={archived ? "Archived tenants will appear here." : "Tenants will appear after they create an account."}
+          description={
+            archived
+              ? "Archived tenants will appear here."
+              : "Tenants will appear after they create an account."
+          }
         />
       )}
     </div>

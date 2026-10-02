@@ -28,12 +28,16 @@ Toliau `{area}` reiškia `landlord` arba `tenant`; GET užklausoms reikia atitin
 | GET | `/api/{area}/periods` | Visų pasiekiamų laikotarpių sąrašas suvestinėms. |
 | GET, POST | `/api/{area}/apartments/{apartment}/leases/{lease}/periods` | Sutarties laikotarpiai; kūrimas: `{ name, startDate, endDate }`. |
 | GET, PUT, DELETE | `/api/{area}/apartments/{apartment}/leases/{lease}/periods/{period}` | Laikotarpio peržiūra, pavadinimo pakeitimas (`{ name }`) arba archyvavimas. |
-| PUT, DELETE | `/api/landlord/tenants/{id}` | Kontakto pakeitimas (`{ name, phoneNumber }`) arba nuomininko archyvavimas. |
+| GET, PUT, DELETE | `/api/landlord/tenants/{id}` | Kontakto pakeitimas (`{ name, phoneNumber }`) arba nuomininko archyvavimas. |
+| GET | `/api/{area}/dashboard` | Visa atitinkamos rolės valdymo skydelio suvestinė viena užklausa. |
+| GET | `/api/landlord/tenants` | Registruotų nuomininkų kontaktų sąrašas. |
+| GET | `/api/tenant/profile` | Prisijungusio nuomininko kontaktai. |
+| GET | `/api/tenant/payments` | Prisijungusio nuomininko mokėjimai. |
 | GET | `/api/landlord/payments` | Nuomotojo mokėjimai; filtrai URL užklausos parametruose `apartment`, `lease`, `tenant`, `period`, `status`. |
 | POST | `/api/tenant/payments/{id}/report` | Savo neapmokėto arba nepavykusio mokėjimo pranešimas; būsena tampa `pending`. |
 | POST | `/api/landlord/payments/{id}/confirm` | Savo buto mokėjimo gavimo patvirtinimas; `pending` būsena tampa `confirmed`. |
 
-ID pateikiami kaip teigiamų dešimtainių skaičių eilutės (pvz., `"12"`), datos – `YYYY-MM-DD`. Kuriant sutartį ar laikotarpį, tėvinį įrašą nurodo URL; neprivalomi JSON `apartmentId` arba `leaseId` turi sutapti su URL. Sutarties negalima perkelti į kitą butą. JSON užklausoms nurodykite `Content-Type: application/json`. Naršyklės keitimo užklausų `Origin` turi sutapti su API adresu.
+ID pateikiami kaip teigiamų dešimtainių skaičių eilutės (pvz., `"12"`), datos – `YYYY-MM-DD`. Kuriant sutartį ar laikotarpį, tėvinį įrašą nurodo URL; neprivalomi JSON `apartmentId` arba `leaseId` turi sutapti su URL. Sutarties negalima perkelti į kitą butą. JSON užklausoms nurodykite `Content-Type: application/json`.
 
 Įrašų atsakymai naudoja `{ "data": ... }`, sąrašai – `{ "data": [...] }`, klaidos – `{ "error": "..." }`. Dažniausi kodai: `400` (blogas JSON ar URL ID), `401` (neprisijungta), `403` (netinkama rolė), `404` (įrašas neprieinamas), `409` (archyvuotas įrašas ar netinkama būsena), `422` (blogi laukai), `500` (serverio klaida). DELETE archyvuoja įrašus; istorija lieka pasiekiama.
 

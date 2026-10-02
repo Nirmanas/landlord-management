@@ -1,9 +1,4 @@
-import type {
-  AppData,
-  PaymentPeriod,
-  Tenant,
-  TenantPayment,
-} from "@/lib/types";
+import type { PaymentPeriod, Tenant, TenantPayment } from "@/lib/types";
 
 export const tenantName = (tenant: Tenant) =>
   `${tenant.firstName} ${tenant.lastName}`.trim();
@@ -46,24 +41,4 @@ export function isOverdue(
   return (
     payment.status === "unpaid" && Boolean(period && period.dueDate < today)
   );
-}
-
-export function landlordMetrics(data: AppData) {
-  const outstanding = data.tenantPayments.filter(
-    (payment) => payment.status !== "confirmed",
-  );
-  return {
-    apartments: data.apartments.filter((apartment) => !apartment.archivedAt).length,
-    activeLeases: data.leases.filter((lease) => lease.status === "active" && !lease.archivedAt && !data.apartments.find((apartment) => apartment.id === lease.apartmentId)?.archivedAt)
-      .length,
-    tenants: data.tenants.filter((tenant) => !tenant.archivedAt).length,
-    outstandingCount: outstanding.length,
-    outstandingCents: outstanding.reduce(
-      (total, payment) => total + payment.amountCents,
-      0,
-    ),
-    pendingCount: data.tenantPayments.filter(
-      (payment) => payment.status === "pending",
-    ).length,
-  };
 }

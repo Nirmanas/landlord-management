@@ -1,7 +1,8 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
-
+import { useApiResource } from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
+import type { TenantDashboard } from "@/lib/types";
 
 import Link from "next/link";
 import { Building2, CalendarDays } from "lucide-react";
@@ -14,27 +15,21 @@ import {
   PageHeader,
   StatCard,
 } from "@/components/shared";
-import { formatCurrency, formatDate, splitRent, todayISO } from "@/lib/domain";
+import { formatCurrency, formatDate } from "@/lib/domain";
 
 export default function Page() {
-  const data = useAppData();
-  const tenant = data.tenants[0];
-  const leases = data.leases.filter((l) =>
-    l.tenantIds.includes(tenant?.id ?? ""),
-  );
-  const currentLease =
-    leases.find((l) => l.status === "active") ??
-    leases.find((l) => l.status === "upcoming") ??
-    leases[0];
-  const apartment = data.apartments.find(
-    (a) => a.id === currentLease?.apartmentId,
-  );
-  const share = currentLease
-    ? splitRent(currentLease.totalRentCents, currentLease.tenantIds).find(
-        (s) => s.tenantId === tenant?.id,
-      )
-    : undefined;
-  const payments = data.tenantPayments.filter((p) => p.tenantId === tenant?.id);
+  const request = useApiResource<TenantDashboard>("/api/tenant/dashboard");
+  if (!request.data) return <ApiStatus resources={[request]} />;
+  const {
+    tenant,
+    currentLease,
+    apartment,
+    shareCents,
+    outstandingCents,
+    outstandingCount,
+    nextPayment,
+    upcomingPayments: upcoming,
+  } = request.data;
   if (!tenant)
     return (
       <EmptyState
@@ -42,22 +37,6 @@ export default function Page() {
         description="Your account does not have a tenant profile. Contact the site administrator."
       />
     );
-  const outstanding = payments.filter((p) => p.status !== "confirmed");
-  const upcoming = outstanding
-    .filter(
-      (p) =>
-        (data.paymentPeriods.find((period) => period.id === p.paymentPeriodId)
-          ?.dueDate ?? "") >= todayISO(),
-    )
-    .sort((a, b) => {
-      const aDate =
-        data.paymentPeriods.find((period) => period.id === a.paymentPeriodId)
-          ?.dueDate ?? "";
-      const bDate =
-        data.paymentPeriods.find((period) => period.id === b.paymentPeriodId)
-          ?.dueDate ?? "";
-      return aDate.localeCompare(bDate);
-    });
   return (
     <div className="space-y-7">
       <PageHeader
@@ -67,7 +46,7 @@ export default function Page() {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           label="Monthly share"
-          value={share ? formatCurrency(share.amountCents) : "—"}
+          value={shareCents !== null ? formatCurrency(shareCents) : "—"}
           detail={
             currentLease?.status === "active"
               ? "Current lease"
@@ -76,25 +55,15 @@ export default function Page() {
         />
         <StatCard
           label="Outstanding balance"
-          value={formatCurrency(
-            outstanding.reduce((sum, p) => sum + p.amountCents, 0),
-          )}
-          detail={`${outstanding.length} unconfirmed payments`}
+          value={formatCurrency(outstandingCents)}
+          detail={`${outstandingCount} unconfirmed payments`}
         />
         <StatCard
           label="Next due"
-          value={
-            upcoming[0]
-              ? formatDate(
-                  data.paymentPeriods.find(
-                    (p) => p.id === upcoming[0].paymentPeriodId,
-                  )?.dueDate ?? "",
-                )
-              : "Nothing due"
-          }
+          value={nextPayment ? formatDate(nextPayment.dueDate) : "Nothing due"}
           detail={
-            upcoming[0]
-              ? formatCurrency(upcoming[0].amountCents)
+            nextPayment
+              ? formatCurrency(nextPayment.amountCents)
               : "You’re all caught up"
           }
         />
@@ -145,10 +114,7 @@ export default function Page() {
             <CardTitle>Upcoming payments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {upcoming.slice(0, 3).map((payment) => {
-              const period = data.paymentPeriods.find(
-                (p) => p.id === payment.paymentPeriodId,
-              );
+            {upcoming.map((payment) => {
               return (
                 <Link
                   href="/tenant/payments"
@@ -161,7 +127,7 @@ export default function Page() {
                       {formatCurrency(payment.amountCents)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Due {period ? formatDate(period.dueDate) : "—"}
+                      Due {formatDate(payment.dueDate)}
                     </p>
                   </div>
                 </Link>

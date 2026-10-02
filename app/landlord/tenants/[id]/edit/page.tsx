@@ -1,9 +1,11 @@
 "use client";
 
+import { useApiItem } from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
+
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api-client";
-import { useAppData } from "@/components/data-provider";
 import { BackLink, NotFoundState, PageHeader } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/form-controls";
@@ -12,34 +14,86 @@ import type { Tenant } from "@/lib/types";
 
 function TenantForm({ tenant }: { tenant: Tenant }) {
   const router = useRouter();
-  const [name, setName] = useState(`${tenant.firstName} ${tenant.lastName}`.trim());
+  const [name, setName] = useState(
+    `${tenant.firstName} ${tenant.lastName}`.trim(),
+  );
   const [phoneNumber, setPhoneNumber] = useState(tenant.phone);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(event: React.FormEvent) {
-    event.preventDefault(); setBusy(true); setError("");
+    event.preventDefault();
+    setBusy(true);
+    setError("");
     try {
-      await apiRequest(`/api/landlord/tenants/${encodeURIComponent(tenant.id)}`, "PUT", { name, phoneNumber });
-      router.push(`/landlord/tenants/${tenant.id}`); router.refresh();
+      await apiRequest(
+        `/api/landlord/tenants/${encodeURIComponent(tenant.id)}`,
+        "PUT",
+        { name, phoneNumber },
+      );
+      router.push(`/landlord/tenants/${tenant.id}`);
+      router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The request failed.");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
-  return <form onSubmit={submit} className="space-y-5">
-    <Card><CardHeader><CardTitle>Tenant information</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
-      <Field label="Name"><Input required value={name} onChange={(e) => setName(e.target.value)} /></Field>
-      <Field label="Phone number"><Input required type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} /></Field>
-    </CardContent></Card>
-    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button>
-  </form>;
+  return (
+    <form onSubmit={submit} className="space-y-5">
+      <Card>
+        <CardHeader>
+          <CardTitle>Tenant information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <Field label="Name">
+            <Input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Field>
+          <Field label="Phone number">
+            <Input
+              required
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+            />
+          </Field>
+        </CardContent>
+      </Card>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <Button type="submit" disabled={busy}>
+        {busy ? "Saving…" : "Save changes"}
+      </Button>
+    </form>
+  );
 }
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const data = useAppData();
-  const tenant = data.tenants.find((item) => item.id === id);
+  const tenantRequest = useApiItem("landlord", "tenants", id);
+  const resources = [tenantRequest];
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const tenant = tenantRequest.data;
   if (!tenant) return <NotFoundState noun="Tenant" href="/landlord/tenants" />;
-  if (tenant.archivedAt) return <NotFoundState noun="Active tenant" href={`/landlord/tenants/${id}`} />;
-  return <div className="space-y-6"><BackLink href={`/landlord/tenants/${id}`} /><PageHeader title="Edit tenant" description="Update the contact details used across leases and payments." /><TenantForm tenant={tenant} /></div>;
+  if (tenant.archivedAt)
+    return (
+      <NotFoundState noun="Active tenant" href={`/landlord/tenants/${id}`} />
+    );
+  return (
+    <div className="space-y-6">
+      <BackLink href={`/landlord/tenants/${id}`} />
+      <PageHeader
+        title="Edit tenant"
+        description="Update the contact details used across leases and payments."
+      />
+      <TenantForm tenant={tenant} />
+    </div>
+  );
 }

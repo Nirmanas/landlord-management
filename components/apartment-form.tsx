@@ -14,12 +14,10 @@ import {
 import { landlordRoutes } from "@/lib/routes";
 import type { Apartment } from "@/lib/types";
 import { landlordApi, apiRequest } from "@/lib/api-client";
-import { useReloadAppData } from "@/components/data-provider";
 import { useState } from "react";
 
 export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
   const router = useRouter();
-  const reload = useReloadAppData();
   const [serverError, setServerError] = useState("");
   const {
     register,
@@ -36,12 +34,17 @@ export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
   async function onSubmit(values: ApartmentFormValues) {
     setServerError("");
     try {
-      const saved = await apiRequest<Apartment>(landlordApi.apartments(apartment?.id), apartment ? "PUT" : "POST", values);
+      const saved = await apiRequest<Apartment>(
+        landlordApi.apartments(apartment?.id),
+        apartment ? "PUT" : "POST",
+        values,
+      );
       const destination = landlordRoutes.apartment(saved.id);
-      try { await reload(); router.push(destination); }
-      catch { window.location.assign(destination); }
+      router.push(destination);
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : "The request failed.");
+      setServerError(
+        error instanceof Error ? error.message : "The request failed.",
+      );
     }
   }
 
@@ -81,7 +84,11 @@ export function ApartmentForm({ apartment }: { apartment?: Apartment }) {
         </CardContent>
       </Card>
 
-      {serverError && <p role="alert" className="text-sm text-destructive">{serverError}</p>}
+      {serverError && (
+        <p role="alert" className="text-sm text-destructive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end gap-3">
         <Link

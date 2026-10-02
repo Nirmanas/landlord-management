@@ -1,8 +1,13 @@
 "use client";
 
-import { useAppData } from "@/components/data-provider";
-import { ReportPaymentButton } from "@/components/action-buttons";
+import {
+  useApiCollection,
+  useApiResource,
+} from "@/components/hooks/api-resource";
+import { ApiStatus } from "@/components/api-status";
+import type { Tenant } from "@/lib/types";
 
+import { ReportPaymentButton } from "@/components/action-buttons";
 
 import { CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,9 +21,26 @@ import { formatCurrency, formatDate } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 
 export default function Page() {
-  const data = useAppData();
-  const tenant = data.tenants[0];
-  const payments = data.tenantPayments.filter((p) => p.tenantId === tenant?.id);
+  const apartmentsRequest = useApiCollection("tenant", "apartments");
+  const leasesRequest = useApiCollection("tenant", "leases");
+  const profileRequest = useApiResource<Tenant | null>("/api/tenant/profile");
+  const periodsRequest = useApiCollection("tenant", "periods");
+  const paymentsRequest = useApiCollection("tenant", "payments");
+  const resources = [
+    apartmentsRequest,
+    leasesRequest,
+    profileRequest,
+    periodsRequest,
+    paymentsRequest,
+  ];
+  if (resources.some((resource) => resource.loading || resource.error))
+    return <ApiStatus resources={resources} />;
+  const apartmentRecords = apartmentsRequest.data ?? [];
+  const leaseRecords = leasesRequest.data ?? [];
+  const periodRecords = periodsRequest.data ?? [];
+  const paymentRecords = paymentsRequest.data ?? [];
+  const tenant = profileRequest.data;
+  const payments = paymentRecords.filter((p) => p.tenantId === tenant?.id);
   if (!tenant)
     return (
       <EmptyState
@@ -28,11 +50,9 @@ export default function Page() {
     );
   const sorted = [...payments].sort((a, b) => {
     const aDate =
-      data.paymentPeriods.find((p) => p.id === a.paymentPeriodId)?.dueDate ??
-      "";
+      periodRecords.find((p) => p.id === a.paymentPeriodId)?.dueDate ?? "";
     const bDate =
-      data.paymentPeriods.find((p) => p.id === b.paymentPeriodId)?.dueDate ??
-      "";
+      periodRecords.find((p) => p.id === b.paymentPeriodId)?.dueDate ?? "";
     return bDate.localeCompare(aDate);
   });
   return (
@@ -44,11 +64,11 @@ export default function Page() {
       {sorted.length ? (
         <div className="space-y-4">
           {sorted.map((payment) => {
-            const period = data.paymentPeriods.find(
+            const period = periodRecords.find(
               (p) => p.id === payment.paymentPeriodId,
             );
-            const lease = data.leases.find((l) => l.id === payment.leaseId);
-            const apartment = data.apartments.find(
+            const lease = leaseRecords.find((l) => l.id === payment.leaseId);
+            const apartment = apartmentRecords.find(
               (a) => a.id === lease?.apartmentId,
             );
             return (
@@ -76,7 +96,16 @@ export default function Page() {
                       {formatCurrency(payment.amountCents)}
                     </p>
                     <PaymentBadge payment={payment} period={period} />
-                    {(payment.status === "unpaid" || payment.status === "failed") && <ReportPaymentButton id={payment.id} />}
+                    {(payment.status === "unpaid" ||
+                      payment.status === "failed") && (
+                      <ReportPaymentButton
+                        id={payment.id}
+                        payment={payment}
+                        apartment={apartment}
+                        period={period}
+                        onReported={paymentsRequest.reload}
+                      />
+                    )}
                   </div>
                 </CardContent>
               </Card>
