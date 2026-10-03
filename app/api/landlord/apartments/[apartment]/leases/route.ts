@@ -72,6 +72,11 @@ export const POST = roleRoute("LANDLORD", async (request, _params, user) => {
       return Response.json({ error: "Select only registered, available tenants." }, { status: 422 });
     }
     const lease = await prisma.$transaction(async (tx) => {
+      const property = await tx.property.findFirst({ where: { id: propertyId, ownerId: user.id } });
+      if (!property)
+        throw new Error("APARTMENT_NOT_FOUND");
+      if (property.archivedAt)
+        throw new Error("APARTMENT_UNAVAILABLE");
       const conflict = await tx.lease.findFirst({ where: { propertyId, startDate: { lte: endDate }, endDate: { gte: startDate } } });
       if (conflict)
         throw new Error("LEASE_CONFLICT");
@@ -89,6 +94,10 @@ export const POST = roleRoute("LANDLORD", async (request, _params, user) => {
       } }, { status: 201 });
   }
   catch (error) {
+    if (error instanceof Error && error.message === "APARTMENT_NOT_FOUND")
+      return Response.json({ error: "Apartment not found." }, { status: 404 });
+    if (error instanceof Error && error.message === "APARTMENT_UNAVAILABLE")
+      return Response.json({ error: "Apartment is unavailable." }, { status: 409 });
     if (error instanceof Error && error.message === "LEASE_CONFLICT")
       return Response.json({ error: "The apartment already has a lease in that date range." }, { status: 409 });
     if (error instanceof Prisma.PrismaClientKnownRequestError && ["P2003", "P2025"].includes(error.code))

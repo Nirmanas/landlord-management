@@ -47,9 +47,14 @@ export function ArchiveButton({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function archive() {
+    const cascade = kind === "apartment"
+      ? " All its leases and their periods will also be archived."
+      : kind === "lease"
+        ? " All its periods will also be archived."
+        : "";
     if (
       !window.confirm(
-        `Archive this ${kind}? It will remain in history and cannot be restored here.`,
+        `Archive this ${kind}?${cascade} It will remain in history and cannot be restored here.`,
       )
     )
       return;

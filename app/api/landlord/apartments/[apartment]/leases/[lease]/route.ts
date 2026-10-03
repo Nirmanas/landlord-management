@@ -125,10 +125,29 @@ export const DELETE = roleRoute("LANDLORD", async (_request, params, user) => {
   if (!/^[1-9]\d*$/.test(rawId) || !Number.isSafeInteger(id))
     return Response.json({ error: "Invalid record ID." }, { status: 400 });
   try {
-    const existing = await prisma.lease.findFirst({ where: { id, property: { ownerId: user.id } }, include: { tenants: { select: { id: true } } } });
-    if (!existing)
+    const lease = await prisma.$transaction(async (tx) => {
+      const existing = await tx.lease.findFirst({
+        where: { id, propertyId: Number(params.apartment), property: { ownerId: user.id } },
+        include: { tenants: { select: { id: true } } },
+      });
+      if (!existing) return null;
+
+      const archivedAt = new Date();
+      const lease = existing.archivedAt
+        ? existing
+        : await tx.lease.update({
+          where: { id },
+          data: { archivedAt },
+          include: { tenants: { select: { id: true } } },
+        });
+      await tx.period.updateMany({
+        where: { leaseId: id, archivedAt: null },
+        data: { archivedAt },
+      });
+      return lease;
+    }, { isolationLevel: "Serializable" });
+    if (!lease)
       return Response.json({ error: "Lease not found." }, { status: 404 });
-    const lease = existing.archivedAt ? existing : await prisma.lease.update({ where: { id }, data: { archivedAt: new Date() }, include: { tenants: { select: { id: true } } } });
     const startDate = lease.startDate.toISOString().slice(0, 10);
     const endDate = lease.endDate.toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
@@ -142,6 +161,8 @@ export const DELETE = roleRoute("LANDLORD", async (_request, params, user) => {
   catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025")
       return Response.json({ error: "Lease not found." }, { status: 404 });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034")
+      return Response.json({ error: "The request conflicts with an existing record. Try again." }, { status: 409 });
     console.error("Archive lease failed", error);
     return Response.json({ error: "The request failed." }, { status: 500 });
   }

@@ -47,19 +47,19 @@ export const POST = roleRoute("LANDLORD", async (request, _params, user) => {
   const startDate = new Date(`${values.startDate}T00:00:00.000Z`);
   const endDate = new Date(`${values.endDate}T00:00:00.000Z`);
   try {
-    const lease = await prisma.lease.findFirst({ where: { id: leaseId, property: { ownerId: user.id } }, include: { tenants: true, property: true } });
-    if (!lease)
-      return Response.json({ error: "Lease not found." }, { status: 404 });
-    if (lease.archivedAt || lease.property.archivedAt)
-      return Response.json({ error: "Lease is unavailable." }, { status: 409 });
-    if (startDate > endDate || startDate < lease.startDate || endDate > lease.endDate)
-      return Response.json({ error: "Period dates must fall within the lease." }, { status: 422 });
-    const tenantIds = lease.tenants.map((tenant) => tenant.id).sort((a, b) => a - b);
-    if (!tenantIds.length)
-      return Response.json({ error: "Assign a tenant before creating a period." }, { status: 409 });
-    const base = lease.rentalPrice / BigInt(tenantIds.length);
-    const remainder = Number(lease.rentalPrice % BigInt(tenantIds.length));
     const period = await prisma.$transaction(async (tx) => {
+      const lease = await tx.lease.findFirst({ where: { id: leaseId, property: { ownerId: user.id } }, include: { tenants: true, property: true } });
+      if (!lease)
+        throw new Error("LEASE_NOT_FOUND");
+      if (lease.archivedAt || lease.property.archivedAt)
+        throw new Error("LEASE_UNAVAILABLE");
+      if (startDate > endDate || startDate < lease.startDate || endDate > lease.endDate)
+        throw new Error("PERIOD_OUTSIDE_LEASE");
+      const tenantIds = lease.tenants.map((tenant) => tenant.id).sort((a, b) => a - b);
+      if (!tenantIds.length)
+        throw new Error("LEASE_WITHOUT_TENANTS");
+      const base = lease.rentalPrice / BigInt(tenantIds.length);
+      const remainder = Number(lease.rentalPrice % BigInt(tenantIds.length));
       const conflict = await tx.period.findFirst({ where: { leaseId, startDate: { lte: endDate }, endDate: { gte: startDate } } });
       if (conflict)
         throw new Error("PERIOD_CONFLICT");
@@ -74,6 +74,14 @@ export const POST = roleRoute("LANDLORD", async (request, _params, user) => {
       } }, { status: 201 });
   }
   catch (error) {
+    if (error instanceof Error && error.message === "LEASE_NOT_FOUND")
+      return Response.json({ error: "Lease not found." }, { status: 404 });
+    if (error instanceof Error && error.message === "LEASE_UNAVAILABLE")
+      return Response.json({ error: "Lease is unavailable." }, { status: 409 });
+    if (error instanceof Error && error.message === "PERIOD_OUTSIDE_LEASE")
+      return Response.json({ error: "Period dates must fall within the lease." }, { status: 422 });
+    if (error instanceof Error && error.message === "LEASE_WITHOUT_TENANTS")
+      return Response.json({ error: "Assign a tenant before creating a period." }, { status: 409 });
     if (error instanceof Error && error.message === "PERIOD_CONFLICT")
       return Response.json({ error: "A period already covers these dates." }, { status: 409 });
     if (error instanceof Prisma.PrismaClientKnownRequestError && ["P2003", "P2025"].includes(error.code))
