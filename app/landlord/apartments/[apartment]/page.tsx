@@ -27,11 +27,10 @@ export default function Page() {
   const resources = [leasesRequest, apartmentRequest];
   if (resources.some((resource) => resource.loading || resource.error))
     return <ApiStatus resources={resources} />;
-  const leaseRecords = leasesRequest.data ?? [];
+  const leases = leasesRequest.data ?? [];
   const { data: apartment } = apartmentRequest;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  const leases = leaseRecords.filter((l) => l.apartmentId === id);
   return (
     <div className="space-y-6">
       <BackLink href="/landlord/apartments">All apartments</BackLink>

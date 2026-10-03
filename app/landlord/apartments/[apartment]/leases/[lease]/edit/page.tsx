@@ -22,7 +22,7 @@ export default function Page() {
   const apartment = apartmentRequest.data;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  if (!lease || lease.apartmentId !== apartmentId)
+  if (!lease)
     return (
       <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />
     );

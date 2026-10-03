@@ -11,7 +11,11 @@ export const GET = roleRoute("TENANT", async (_request, _params, user) => {
       select: tenantSelect,
     }),
     prisma.lease.findMany({
-      where: { tenants: { some: { userId: user.id } } },
+      where: {
+        tenants: { some: { userId: user.id } },
+        archivedAt: null,
+        property: { archivedAt: null },
+      },
       include: { tenants: { select: { id: true } }, property: true },
       orderBy: { startDate: "desc" },
     }),
@@ -34,8 +38,7 @@ export const GET = roleRoute("TENANT", async (_request, _params, user) => {
     ) ??
     leases.find(
       (lease) => status(lease.startDate, lease.endDate) === "upcoming",
-    ) ??
-    leases[0];
+    );
   const currentLease: Lease | null = selected
     ? {
         id: String(selected.id),

@@ -65,7 +65,7 @@ export default function Page() {
   if (resources.some((resource) => resource.loading || resource.error))
     return <ApiStatus resources={resources} />;
   const tenantRecords = tenantsRequest.data ?? [];
-  const paymentRecords = paymentsRequest.data ?? [];
+  const payments = paymentsRequest.data ?? [];
   const { data: period, reload: reloadPeriod } = periodRequest;
   const apartment = apartmentRequest.data;
   if (!apartment)
@@ -75,17 +75,13 @@ export default function Page() {
     return (
       <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />
     );
-  if (!period || period.leaseId !== leaseId)
+  if (!period)
     return (
       <NotFoundState
         noun="Payment period"
         href={landlordRoutes.lease(apartmentId, leaseId)}
       />
     );
-  const payments = paymentRecords.filter(
-    (payment) =>
-      payment.paymentPeriodId === periodId && payment.leaseId === leaseId,
-  );
   const total = payments.reduce((sum, payment) => sum + payment.amountCents, 0);
   async function saveName(event: React.FormEvent) {
     event.preventDefault();

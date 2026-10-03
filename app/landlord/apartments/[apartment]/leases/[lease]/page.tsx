@@ -66,16 +66,14 @@ export default function Page() {
   const apartment = apartmentRequest.data;
   if (!apartment)
     return <NotFoundState noun="Apartment" href={landlordRoutes.apartments} />;
-  if (!lease || lease.apartmentId !== apartmentId)
+  if (!lease)
     return (
       <NotFoundState noun="Lease" href={landlordRoutes.leases(apartmentId)} />
     );
   const archivedLease = Boolean(lease.archivedAt || apartment.archivedAt);
   const periods = (periodRecords ?? [])
     .filter(
-      (p) =>
-        p.leaseId === leaseId &&
-        Boolean(p.archivedAt || archivedLease) === showArchived,
+      (p) => Boolean(p.archivedAt || archivedLease) === showArchived,
     )
     .sort((a, b) => b.startDate.localeCompare(a.startDate));
   const shares = splitRent(lease.totalRentCents, lease.tenantIds);

@@ -38,9 +38,8 @@ export default function Page() {
   const apartmentRecords = apartmentsRequest.data ?? [];
   const leaseRecords = leasesRequest.data ?? [];
   const periodRecords = periodsRequest.data ?? [];
-  const paymentRecords = paymentsRequest.data ?? [];
+  const payments = paymentsRequest.data ?? [];
   const tenant = profileRequest.data;
-  const payments = paymentRecords.filter((p) => p.tenantId === tenant?.id);
   if (!tenant)
     return (
       <EmptyState

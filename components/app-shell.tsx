@@ -25,7 +25,7 @@ const landlordNav = [
 ];
 const tenantNav = [
   { href: "/tenant", label: "Dashboard", icon: Home },
-  { href: "/tenant/lease", label: "My lease", icon: FileText },
+  { href: "/tenant/lease", label: "My leases", icon: FileText },
   { href: "/tenant/payments", label: "My payments", icon: CreditCard },
 ];
 

@@ -98,13 +98,13 @@ export default function Page() {
                     />
                   </p>
                   <Link href="/tenant/lease" className="mt-4 inline-block">
-                    <Button variant="outline">View my lease</Button>
+                    <Button variant="outline">View my leases</Button>
                   </Link>
                 </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No lease is assigned to this tenant.
+                No current or upcoming lease is available.
               </p>
             )}
           </CardContent>
