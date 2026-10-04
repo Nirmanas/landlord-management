@@ -2,12 +2,14 @@ info:
   name: Nuomininko pasirinkto buto sutartys → 200
   type: http
   seq: 29
+
 http:
   method: GET
   url: "{{baseUrl}}/api/tenant/apartments/{{apartmentId}}/leases"
   auth:
     type: bearer
     token: "{{tenantAccessToken}}"
+
 runtime:
   scripts:
     - type: before-request
@@ -29,6 +31,7 @@ runtime:
           expect(res.body.data.every(item => item.apartmentId === bru.getVar("apartmentId"))).to.equal(true);
           expect(res.body.data.some(item => item.id === bru.getVar("leaseId"))).to.equal(true);
         });
+
 settings:
   encodeUrl: true
   timeout: 0

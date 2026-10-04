@@ -77,7 +77,7 @@ export const POST = roleRoute("LANDLORD", async (request, _params, user) => {
         throw new Error("APARTMENT_NOT_FOUND");
       if (property.archivedAt)
         throw new Error("APARTMENT_UNAVAILABLE");
-      const conflict = await tx.lease.findFirst({ where: { propertyId, startDate: { lte: endDate }, endDate: { gte: startDate } } });
+      const conflict = await tx.lease.findFirst({ where: { propertyId, archivedAt: null, startDate: { lte: endDate }, endDate: { gte: startDate } } });
       if (conflict)
         throw new Error("LEASE_CONFLICT");
       return tx.lease.create({

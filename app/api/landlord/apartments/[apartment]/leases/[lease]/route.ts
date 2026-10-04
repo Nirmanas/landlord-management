@@ -89,7 +89,7 @@ export const PUT = roleRoute("LANDLORD", async (request, params, user) => {
       return Response.json({ error: "Select only registered, available tenants." }, { status: 422 });
     }
     const lease = await prisma.$transaction(async (tx) => {
-      const conflict = await tx.lease.findFirst({ where: { propertyId, id: { not: id }, startDate: { lte: endDate }, endDate: { gte: startDate } } });
+      const conflict = await tx.lease.findFirst({ where: { propertyId, id: { not: id }, archivedAt: null, startDate: { lte: endDate }, endDate: { gte: startDate } } });
       if (conflict)
         throw new Error("LEASE_CONFLICT");
       return tx.lease.update({

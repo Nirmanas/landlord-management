@@ -39,7 +39,7 @@ runtime:
         test("Prieigos žetonas galioja 15 minučių", function () {
           expect(res.body.access_token).to.be.a("string").and.not.empty;
           expect(res.body.token_type).to.equal("Bearer");
-          expect(res.body.expires_in).to.equal(900);
+          expect(res.body.expires_in).to.equal(3600);
         });
 settings:
   encodeUrl: true

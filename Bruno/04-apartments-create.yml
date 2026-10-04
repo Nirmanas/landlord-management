@@ -23,8 +23,7 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: if (res.status === 201 && res.body?.data?.id) bru.setVar("apartmentId",
-        res.body.data.id);
+      code: if (res.status === 201 && res.body?.data?.id) bru.setVar("apartmentId", res.body.data.id);
     - type: tests
       code: |-
         test("POST /api/landlord/apartments → 201", function () {

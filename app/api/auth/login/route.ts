@@ -1,5 +1,6 @@
 import { loginSchema } from "@/components/auth/schemas";
 import { login, logout } from "@/lib/auth/auth";
+import { ACCESS_DURATION_SECONDS } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       success: true,
       access_token: token,
       token_type: "Bearer",
-      expires_in: 60 * 15,
+      expires_in: ACCESS_DURATION_SECONDS,
     },
     {
       status: 201,
