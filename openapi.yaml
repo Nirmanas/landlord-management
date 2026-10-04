@@ -764,7 +764,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/ServerError"
-    put:
+    patch:
       tags:
         - Payment periods
       operationId: landlordUpdatePeriodNameNested
@@ -780,7 +780,7 @@ paths:
             schema:
               $ref: "#/components/schemas/PeriodNameInput"
       responses:
-        "201":
+        "200":
           description: Updated payment period.
           content:
             application/json:
@@ -1253,7 +1253,7 @@ paths:
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
-    post:
+    patch:
       tags:
         - Payments
       operationId: landlordConfirmPayment
@@ -1302,7 +1302,7 @@ paths:
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
-    post:
+    patch:
       tags:
         - Payments
       operationId: tenantReportPayment

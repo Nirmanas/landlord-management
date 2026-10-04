@@ -90,7 +90,7 @@ export default function Page() {
     try {
       await apiRequest<PaymentPeriod>(
         landlordApi.periods(apartmentId, leaseId, periodId),
-        "PUT",
+        "PATCH",
         { name },
       );
       reloadPeriod();

@@ -1,10 +1,10 @@
 info:
-  name: "Laikotarpiai: PUT įrašą → 201"
+  name: "Laikotarpiai: PATCH įrašą → 200"
   type: http
   seq: 19
 
 http:
-  method: PUT
+  method: PATCH
   url: "{{baseUrl}}/api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/pe\
     riods/{{periodId}}"
   headers:
@@ -24,8 +24,8 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("PUT /api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/periods/{{periodId}} → 201", function () {
-          expect(res.status).to.equal(201);
+        test("PATCH /api/landlord/apartments/{{apartmentId}}/leases/{{leaseId}}/periods/{{periodId}} → 200", function () {
+          expect(res.status).to.equal(200);
         });
 
         test("Grąžintas tinkamas įrašas", function () {

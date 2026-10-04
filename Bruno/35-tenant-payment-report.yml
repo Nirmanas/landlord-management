@@ -3,7 +3,7 @@ info:
   type: http
   seq: 35
 http:
-  method: POST
+  method: PATCH
   url: "{{baseUrl}}/api/tenant/payments/{{paymentId}}/report"
   auth:
     type: bearer
@@ -21,7 +21,7 @@ runtime:
         if (res.status === 200 && res.body?.data?.status === "pending") bru.setVar("reportedPaymentId", res.body.data.id);
     - type: tests
       code: |-
-        test("POST /api/tenant/payments/{{paymentId}}/report → 200", function () {
+        test("PATCH /api/tenant/payments/{{paymentId}}/report → 200", function () {
           expect(res.status).to.equal(200);
         });
 

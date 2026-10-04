@@ -28,7 +28,7 @@ export const GET = roleRoute("LANDLORD", async (_request, params, user) => {
   }
 });
 
-export const PUT = roleRoute("LANDLORD", async (request, params, user) => {
+export const PATCH = roleRoute("LANDLORD", async (request, params, user) => {
   const rawId = params.period!;
   const id = Number(rawId);
   if (!/^[1-9]\d*$/.test(rawId) || !Number.isSafeInteger(id))
@@ -54,7 +54,7 @@ export const PUT = roleRoute("LANDLORD", async (request, params, user) => {
         id: String(period.id), leaseId: String(period.leaseId), name: period.name,
         startDate: period.startDate.toISOString().slice(0, 10), endDate: period.endDate.toISOString().slice(0, 10),
         dueDate: period.dueDate.toISOString().slice(0, 10), archivedAt: period.archivedAt?.toISOString() ?? null,
-      } }, { status: 201 });
+      } });
   }
   catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025")

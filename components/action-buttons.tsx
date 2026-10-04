@@ -128,7 +128,7 @@ function PaymentActionButton({
     try {
       await apiRequest(
         `/api/${reporting ? "tenant" : "landlord"}/payments/${encodeURIComponent(id)}/${mode}`,
-        "POST",
+        "PATCH",
       );
       setOpen(false);
       onSuccess?.();

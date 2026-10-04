@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { roleRoute } from "@/lib/api-route";
 
-export const POST = roleRoute("TENANT", async (_request, params, user) => {
+export const PATCH = roleRoute("TENANT", async (_request, params, user) => {
   const id = Number(params.id);
   const scope = { tenant: { userId: user.id } };
   const payment = await prisma.payment.findFirst({

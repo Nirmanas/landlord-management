@@ -3,7 +3,7 @@ info:
   type: http
   seq: 36
 http:
-  method: POST
+  method: PATCH
   url: "{{baseUrl}}/api/landlord/payments/{{paymentId}}/confirm"
   auth:
     type: bearer
@@ -17,7 +17,7 @@ runtime:
         }
     - type: tests
       code: |-
-        test("POST /api/landlord/payments/{{paymentId}}/confirm → 200", function () {
+        test("PATCH /api/landlord/payments/{{paymentId}}/confirm → 200", function () {
           expect(res.status).to.equal(200);
         });
 
