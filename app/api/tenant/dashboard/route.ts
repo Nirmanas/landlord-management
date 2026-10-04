@@ -3,6 +3,7 @@ import { roleRoute } from "@/lib/api-route";
 import { tenantRecord, tenantSelect } from "@/lib/api-records";
 import { splitRent, todayISO } from "@/lib/domain";
 import type { Lease, TenantDashboard } from "@/lib/types";
+import { tenantLeaseDocumentLinks } from "@/lib/lease-links";
 
 export const GET = roleRoute("TENANT", async (_request, _params, user) => {
   const [profile, leases, payments] = await Promise.all([
@@ -49,6 +50,7 @@ export const GET = roleRoute("TENANT", async (_request, _params, user) => {
         totalRentCents: Number(selected.rentalPrice),
         tenantIds: selected.tenants.map((tenant) => String(tenant.id)),
         archivedAt: selected.archivedAt?.toISOString() ?? null,
+        links: tenantLeaseDocumentLinks(selected.propertyId, selected.id, Boolean(selected.leaseFilePath)),
       }
     : null;
   const upcoming = payments

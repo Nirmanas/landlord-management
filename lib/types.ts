@@ -26,6 +26,19 @@ export interface Lease {
   totalRentCents: number;
   tenantIds: string[];
   archivedAt: string | null;
+  links: LeaseDocumentLinks;
+}
+
+export interface LeaseDocumentLink {
+  href: string;
+  method: "GET" | "PUT";
+  type: "application/pdf";
+}
+
+export interface LeaseDocumentLinks {
+  viewDocument?: LeaseDocumentLink;
+  uploadDocument?: LeaseDocumentLink;
+  downloadDocument?: LeaseDocumentLink;
 }
 
 export interface PaymentPeriod {

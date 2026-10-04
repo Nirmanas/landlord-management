@@ -62,9 +62,11 @@ export function roleApi(role: ApiRole) {
     `${apiPath(role, "apartments")}${suffix(id)}`;
   const leases = (apartmentId: string, id?: string) =>
     `${apartments(apartmentId)}/leases${suffix(id)}`;
+  const leaseDocument = (apartmentId: string, leaseId: string) =>
+    `${leases(apartmentId, leaseId)}/document`;
   const periods = (apartmentId: string, leaseId: string, id?: string) =>
     `${leases(apartmentId, leaseId)}/periods${suffix(id)}`;
-  return { apartments, leases, periods };
+  return { apartments, leases, leaseDocument, periods };
 }
 
 export const landlordApi = roleApi("landlord");

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { roleRoute } from "@/lib/api-route";
+import { tenantLeaseDocumentLinks } from "@/lib/lease-links";
 
 export const GET = roleRoute("TENANT", async (_request, params, user) => {
   try {
@@ -23,6 +24,7 @@ export const GET = roleRoute("TENANT", async (_request, params, user) => {
           status: startDate > today ? "upcoming" : endDate < today ? "ended" : "active",
           totalRentCents: Number(lease.rentalPrice), tenantIds: lease.tenants.map((tenant) => String(tenant.id)),
           archivedAt: lease.archivedAt?.toISOString() ?? null,
+          links: tenantLeaseDocumentLinks(lease.propertyId, lease.id, Boolean(lease.leaseFilePath && lease.tenants.some((tenant) => tenant.id === tenantId))),
         };
       }) });
   }

@@ -31,6 +31,7 @@ import { formatCurrency, formatDate, splitRent } from "@/lib/domain";
 import { tenantName } from "@/lib/domain";
 import { useParams } from "next/navigation";
 import { landlordRoutes } from "@/lib/routes";
+import { LeaseDocument } from "@/components/lease-document";
 
 export default function Page() {
   const [showArchived, setShowArchived] = useState(false);
@@ -108,6 +109,14 @@ export default function Page() {
           )}
         </div>
       </div>
+      <Card>
+        <CardHeader><CardTitle>Lease PDF</CardTitle></CardHeader>
+        <CardContent>
+          <LeaseDocument
+            links={lease.links}
+          />
+        </CardContent>
+      </Card>
       <div className="grid gap-5 lg:grid-cols-3">
         <Card>
           <CardHeader>

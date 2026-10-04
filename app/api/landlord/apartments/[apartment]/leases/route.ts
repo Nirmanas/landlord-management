@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { roleRoute } from "@/lib/api-route";
+import { landlordLeaseDocumentLinks } from "@/lib/lease-links";
 
 const leaseSchema = z.object({
   apartmentId: z.string(), startDate: z.string(), endDate: z.string(),
@@ -13,7 +14,7 @@ export const GET = roleRoute("LANDLORD", async (_request, params, user) => {
   try {
     const leases = await prisma.lease.findMany({
       where: { propertyId: Number(params.apartment), AND: [{ property: { ownerId: user.id } }] },
-      include: { tenants: { select: { id: true } } }, orderBy: { startDate: "desc" },
+      include: { tenants: { select: { id: true } }, property: { select: { archivedAt: true } } }, orderBy: { startDate: "desc" },
     });
     const today = new Date().toISOString().slice(0, 10);
     return Response.json({ data: leases.map((lease) => {
@@ -24,6 +25,7 @@ export const GET = roleRoute("LANDLORD", async (_request, params, user) => {
           status: startDate > today ? "upcoming" : endDate < today ? "ended" : "active",
           totalRentCents: Number(lease.rentalPrice), tenantIds: lease.tenants.map((tenant) => String(tenant.id)),
           archivedAt: lease.archivedAt?.toISOString() ?? null,
+          links: landlordLeaseDocumentLinks(lease.propertyId, lease.id, Boolean(lease.leaseFilePath), !lease.archivedAt && !lease.property.archivedAt),
         };
       }) });
   }
@@ -91,6 +93,7 @@ export const POST = roleRoute("LANDLORD", async (request, _params, user) => {
         status: values.startDate > today ? "upcoming" : values.endDate < today ? "ended" : "active",
         totalRentCents: Number(lease.rentalPrice), tenantIds: lease.tenants.map((tenant) => String(tenant.id)),
         archivedAt: lease.archivedAt?.toISOString() ?? null,
+        links: landlordLeaseDocumentLinks(lease.propertyId, lease.id, false, true),
       } }, { status: 201 });
   }
   catch (error) {

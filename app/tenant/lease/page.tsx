@@ -100,6 +100,16 @@ export default function Page() {
                 </span>
               </DetailItem>
             </CardContent>
+            {lease.links.downloadDocument && (
+              <div className="border-t border-border px-6 py-4 text-sm">
+                <a
+                  href={lease.links.downloadDocument.href}
+                  className="font-medium text-brand-soft underline"
+                >
+                  Download lease PDF
+                </a>
+              </div>
+            )}
           </Card>
         );
       })}

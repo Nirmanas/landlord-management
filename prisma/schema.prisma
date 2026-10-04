@@ -61,6 +61,7 @@ model Lease {
   payments Payment[]
   periods Period[]
   archivedAt DateTime?
+  leaseFilePath String?
 }
 
 enum PaymentStatus {

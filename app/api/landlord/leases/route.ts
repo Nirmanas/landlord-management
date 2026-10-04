@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { roleRoute } from "@/lib/api-route";
+import { landlordLeaseDocumentLinks } from "@/lib/lease-links";
 
 export const GET = roleRoute("LANDLORD", async (_request, _params, user) => {
   try {
     const leases = await prisma.lease.findMany({
       where: { propertyId: undefined, AND: [{ property: { ownerId: user.id } }] },
-      include: { tenants: { select: { id: true } } }, orderBy: { startDate: "desc" },
+      include: { tenants: { select: { id: true } }, property: { select: { archivedAt: true } } }, orderBy: { startDate: "desc" },
     });
     const today = new Date().toISOString().slice(0, 10);
     return Response.json({ data: leases.map((lease) => {
@@ -16,6 +17,7 @@ export const GET = roleRoute("LANDLORD", async (_request, _params, user) => {
           status: startDate > today ? "upcoming" : endDate < today ? "ended" : "active",
           totalRentCents: Number(lease.rentalPrice), tenantIds: lease.tenants.map((tenant) => String(tenant.id)),
           archivedAt: lease.archivedAt?.toISOString() ?? null,
+          links: landlordLeaseDocumentLinks(lease.propertyId, lease.id, Boolean(lease.leaseFilePath), !lease.archivedAt && !lease.property.archivedAt),
         };
       }) });
   }

@@ -660,6 +660,63 @@ paths:
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
+  /api/landlord/apartments/{apartment}/leases/{lease}/document:
+    get:
+      tags: [Leases]
+      operationId: landlordViewLeaseDocument
+      summary: View the lease PDF
+      description: Landlord only. Available when the lease has a saved PDF.
+      responses:
+        "200":
+          description: PDF displayed inline.
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    put:
+      tags: [Leases]
+      operationId: landlordUploadLeaseDocument
+      summary: Save or replace the lease PDF
+      description: Landlord only. The lease and apartment must be available.
+      requestBody:
+        required: true
+        content:
+          application/pdf:
+            schema: { type: string, format: binary, description: PDF up to 2 MiB. }
+      responses:
+        "200":
+          description: PDF saved; returns the document actions now available.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [links]
+                    properties:
+                      links: { $ref: "#/components/schemas/LeaseDocumentLinks" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { description: PDF exceeds 2 MB. }
+        "415": { description: Content type must be application/pdf. }
+        "422": { description: Uploaded bytes are not detected as a PDF. }
+        "500": { $ref: "#/components/responses/ServerError" }
+    parameters:
+      - name: apartment
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/RecordId" }
+      - name: lease
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/RecordId" }
   /api/landlord/apartments/{apartment}/leases/{lease}/periods:
     get:
       tags:
@@ -1043,6 +1100,31 @@ paths:
           parent.
         schema:
           $ref: "#/components/schemas/RecordId"
+  /api/tenant/apartments/{apartment}/leases/{lease}/document:
+    get:
+      tags: [Leases]
+      operationId: tenantDownloadLeaseDocument
+      summary: Download the assigned lease PDF
+      description: Tenant only. Requires current assignment to this lease.
+      responses:
+        "200":
+          description: PDF delivered as an attachment.
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    parameters:
+      - name: apartment
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/RecordId" }
+      - name: lease
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/RecordId" }
   /api/tenant/apartments/{apartment}/leases/{lease}/periods:
     get:
       tags:
@@ -1732,6 +1814,7 @@ components:
           totalRentCents,
           tenantIds,
           archivedAt,
+          links,
         ]
       properties:
         id: { $ref: "#/components/schemas/RecordId" }
@@ -1749,6 +1832,25 @@ components:
           type: array
           items: { $ref: "#/components/schemas/RecordId" }
         archivedAt: { type: [string, "null"], format: date-time }
+        links: { $ref: "#/components/schemas/LeaseDocumentLinks" }
+    LeaseDocumentAction:
+      type: object
+      required: [href, method, type]
+      properties:
+        href: { type: string, description: Same-origin API path. }
+        method: { type: string, enum: [GET, PUT] }
+        type: { type: string, const: application/pdf }
+    LeaseDocumentLinks:
+      type: object
+      description: |
+        Available document actions for this lease. Landlords receive viewDocument
+        when a PDF exists and uploadDocument while the lease can be edited.
+        Assigned tenants receive downloadDocument when a PDF exists. Former
+        tenants with payment history receive no document action.
+      properties:
+        viewDocument: { $ref: "#/components/schemas/LeaseDocumentAction" }
+        uploadDocument: { $ref: "#/components/schemas/LeaseDocumentAction" }
+        downloadDocument: { $ref: "#/components/schemas/LeaseDocumentAction" }
     PeriodInput:
       type: object
       additionalProperties: false
@@ -1838,11 +1940,11 @@ components:
         - amountCents
         - status
       properties:
-        id: &a2
+        id: &payment_record_id
           $ref: "#/components/schemas/RecordId"
-        paymentPeriodId: *a2
-        leaseId: *a2
-        tenantId: *a2
+        paymentPeriodId: *payment_record_id
+        leaseId: *payment_record_id
+        tenantId: *payment_record_id
         amountCents:
           type: integer
         status:
