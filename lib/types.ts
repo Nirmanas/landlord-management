@@ -60,6 +60,14 @@ export interface TenantPayment {
   status: PaymentStatus;
 }
 
+export interface PaginatedPayments {
+  items: TenantPayment[];
+  page: number;
+  pageSize: 5 | 10 | 25;
+  total: number;
+  totalPages: number;
+}
+
 export interface LandlordDashboard {
   metrics: {
     apartments: number;

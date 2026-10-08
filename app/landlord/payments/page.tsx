@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   useApiCollection,
   useApiResource,
@@ -10,7 +11,7 @@ import { ConfirmPaymentButton } from "@/components/action-buttons";
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { TenantPayment } from "@/lib/types";
+import type { PaginatedPayments } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/form-controls";
@@ -49,32 +50,52 @@ export default function Page() {
     period: searchParams.get("period") ?? "",
     status: searchParams.get("status") ?? "",
   };
+  const rawPage = searchParams.get("page");
+  const parsedPage = rawPage && /^[1-9]\d*$/.test(rawPage) ? Number(rawPage) : 1;
+  const page = Number.isSafeInteger(parsedPage) ? parsedPage : 1;
+  const rawPageSize = searchParams.get("pageSize");
+  const pageSize =
+    rawPageSize === "10" || rawPageSize === "25" ? rawPageSize : "5";
+  const hasFilters = Object.values(filters).some(Boolean);
   const query = new URLSearchParams(
     Object.entries(filters).filter(([, value]) => value !== ""),
   );
+  query.set("page", String(page));
+  query.set("pageSize", pageSize);
   const {
     data: payments,
     loading,
     error,
     reload,
-  } = useApiResource<TenantPayment[]>(
-    `/api/landlord/payments${query.size ? `?${query}` : ""}`,
-  );
+  } = useApiResource<PaginatedPayments>(`/api/landlord/payments?${query}`);
+  const currentSearch = searchParams.toString();
+  useEffect(() => {
+    const effectivePage = payments?.page ?? page;
+    if (rawPage === String(effectivePage) && rawPageSize === pageSize) return;
+    const params = new URLSearchParams(currentSearch);
+    params.set("page", String(effectivePage));
+    params.set("pageSize", pageSize);
+    router.replace(`/landlord/payments?${params}`, { scroll: false });
+  }, [currentSearch, page, pageSize, payments?.page, rawPage, rawPageSize, router]);
   if (resources.some((resource) => resource.loading || resource.error))
     return <ApiStatus resources={resources} />;
   const apartmentRecords = apartmentsRequest.data ?? [];
   const leaseRecords = leasesRequest.data ?? [];
   const tenantRecords = tenantsRequest.data ?? [];
   const periodRecords = periodsRequest.data ?? [];
-  const rows = payments ?? [];
-  const set = (key: keyof typeof filters, value: string) => {
+  const rows = payments?.items ?? [];
+  const navigate = (changes: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(key, value);
-    else params.delete(key);
-    router.replace(`/landlord/payments${params.size ? `?${params}` : ""}`, {
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    router.replace(`/landlord/payments?${params}`, {
       scroll: false,
     });
   };
+  const set = (key: keyof typeof filters, value: string) =>
+    navigate({ [key]: value, page: "1", pageSize });
   return (
     <div className="space-y-6">
       <PageHeader
@@ -244,13 +265,67 @@ export default function Page() {
         </Card>
       ) : (
         <EmptyState
-          title={query.size ? "No matching payments" : "No payments yet"}
+          title={hasFilters ? "No matching payments" : "No payments yet"}
           description={
-            query.size
+            hasFilters
               ? "Try clearing one or more filters."
               : "Create a lease and payment period to generate tenant payments."
           }
         />
+      )}
+      {!error && (
+        <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <label htmlFor="payments-page-size">Payments per page</label>
+            <Select
+              id="payments-page-size"
+              className="w-20"
+              value={pageSize}
+              disabled={loading}
+              onChange={(e) => navigate({ pageSize: e.target.value, page: "1" })}
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+            </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {payments && (
+              <span>
+                {payments.total === 0
+                  ? 0
+                  : (payments.page - 1) * payments.pageSize + 1}
+                –{Math.min(payments.page * payments.pageSize, payments.total)} of{" "}
+                {payments.total} payments
+              </span>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={loading || !payments || payments.page <= 1}
+              onClick={() =>
+                payments && navigate({ page: String(payments.page - 1), pageSize })
+              }
+            >
+              Previous
+            </Button>
+            {payments && (
+              <span>Page {payments.page} of {payments.totalPages}</span>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={loading || !payments || payments.page >= payments.totalPages}
+              onClick={() =>
+                payments && navigate({ page: String(payments.page + 1), pageSize })
+              }
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
